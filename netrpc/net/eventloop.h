@@ -5,9 +5,12 @@
 #include <set>
 #include <functional>
 #include <queue>
+#include <mutex>
+#include <memory>
+
 #include "netrpc/net/fd_event.h"
 #include "netrpc/net/wakeup_fd_event.h"
-#include <mutex>
+#include "netrpc/net/timer.h"
 
 namespace netrpc {
 
@@ -33,10 +36,14 @@ public:
 
     void addTask(std::function<void()> cb, bool is_wake_up = false);
 
+    void addTimerEvent(TimerEvent::TimerEventPtr event);
+
 private:
     void dealWakeup();
 
     void initWakeUpFdEvent();
+
+    void initTimer();
 
 private:
     pid_t m_thread_id {0};
@@ -45,7 +52,7 @@ private:
 
     int m_wakeup_fd {0};
 
-    WakeFdEventPtr m_wakeup_fd_event {NULL};
+    WakeUpFdEvent* m_wakeup_fd_event {NULL};
 
     bool m_quit {false};
 
@@ -54,6 +61,8 @@ private:
     std::queue<std::function<void()>> m_pending_tasks;
 
     std::mutex m_mutex;
+
+    Timer* m_timer {NULL};
 };
 
 }

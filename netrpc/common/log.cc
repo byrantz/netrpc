@@ -88,7 +88,7 @@ void Logger::log() {
     
     // }
     std::unique_lock<std::mutex> lock(m_mutex);
-    std::queue<std::string> tmp = m_buffer;
+    std::queue<std::string> tmp;
     m_buffer.swap(tmp);
 
     lock.unlock();

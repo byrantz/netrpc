@@ -1,13 +1,15 @@
-#include <pthread>
+#include <pthread.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <memory>
 #include "netrpc/common/log.h"
 #include "netrpc/common/config.h"
 #include "netrpc/net/fd_event.h"
 #include "netrpc/net/eventloop.h"
+#include "netrpc/net/timer_event.h"
 
 int main() {
     netrpc::Config::GetInst().Init("../conf/netrpc.xml");
@@ -53,6 +55,14 @@ int main() {
     });
     eventloop->addEpollEvent(&event);
 
+    int i = 0;
+    netrpc::TimerEvent::TimerEventPtr timer_event = std::make_shared<netrpc::TimerEvent> (
+        100, true, [&i]() {
+            INFOLOG("trigger timer event, count=%d", i++);
+        }
+    );
+
+    eventloop->addTimerEvent(timer_event);
     eventloop->loop();
 
     return 0;
