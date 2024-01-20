@@ -5,7 +5,7 @@
 #include <semaphore.h>
 #include <thread>
 #include <memory>
-#include <function>
+#include <functional>
 #include "netrpc/net/eventloop.h"
 
 namespace netrpc {
@@ -14,7 +14,7 @@ class IOThread {
 public:
     using ThreadFunc = std::function<void()>;
 
-    IOThread(ThreadFunc func);
+    IOThread();
 
     ~IOThread();
 

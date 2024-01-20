@@ -38,6 +38,9 @@ public:
 
     void addTimerEvent(TimerEvent::TimerEventPtr event);
 
+public:
+    static EventLoop* GetCurrentEventLoop();
+
 private:
     void dealWakeup();
 

@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include <assert>
+#include <assert.h>
 #include "netrpc/net/io_thread.h"
 #include "netrpc/common/log.h"
 #include "netrpc/common/util.h"
@@ -27,6 +27,7 @@ IOThread::~IOThread() {
     sem_destroy(&m_init_semaphore);
     sem_destroy(&m_start_semaphore);
 
+    // 等待当前 IO 线程结束 
     pthread_join(m_thread, NULL);
 
     if (m_eventloop) {
@@ -45,11 +46,12 @@ void* IOThread::Main(void* arg) {
     sem_post(&thread->m_init_semaphore);
 
     // 让 IO 线程等待，直到我们主动启动
+    // 静态成员函数必须通过对象才能访问非静态成员变量
     DEBUGLOG("IOThread %d created, wait start semaphore", thread->m_thread_id);
 
     sem_wait(&thread->m_start_semaphore);
     DEBUGLOG("IOThread %d start loop", thread->m_thread_id);
-    thread->m_event_loop->loop();
+    thread->m_eventloop->loop();
 
     DEBUGLOG("IOThread %d end loop", thread->m_thread_id);
 
