@@ -30,23 +30,23 @@ std::string formatString(const char* str, Args&&... args) {
 #define DEBUGLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Debug) \
     { \
-        netrpc::Logger::GetInst().pushLog((new netrpc::LogEvent(netrpc::LogLevel::Debug))->toString() \
+        netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Debug)).toString() \
         + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
         netrpc::Logger::GetInst().log(); \
     } \
 
 #define INFOLOG(str, ...) \
-  if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Info) \
-  { \
-  netrpc::Logger::GetInst().pushLog((new netrpc::LogEvent(netrpc::LogLevel::Info))->toString() \
-    + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-  netrpc::Logger::GetInst().log(); \
-  } \
+    if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Info) \
+    { \
+        netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Info)).toString() \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
+        netrpc::Logger::GetInst().log(); \
+    } \
 
 #define ERRORLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Error) \
     { \
-        netrpc::Logger::GetInst().pushLog((new netrpc::LogEvent(netrpc::LogLevel::Error))->toString() \
+        netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Error)).toString() \
         + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
         netrpc::Logger::GetInst().log(); \
     } \

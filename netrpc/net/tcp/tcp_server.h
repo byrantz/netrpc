@@ -1,10 +1,12 @@
 #ifndef NETRPC_NET_TCP_SERVER_H
 #define NETRPC_NET_TCP_SERVER_H
 
+#include <set>
 #include "netrpc/net/tcp/tcp_acceptor.h"
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/eventloop.h"
 #include "netrpc/net/io_thread_group.h"
+#include "netrpc/net/tcp/tcp_connection.h"
 
 namespace netrpc {
 
@@ -34,6 +36,9 @@ private:
     FdEvent* m_listen_fd_event;
 
     int m_client_counts {0};
+
+    std::set<TcpConnection::TcpConnectionPtr> m_client;
+
 };
 }
 

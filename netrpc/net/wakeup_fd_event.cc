@@ -15,10 +15,10 @@ void WakeUpFdEvent::wakeup() {
     char buf[8] = {'a'};
     int rt = write(m_fd, buf, 8);
     if (rt != 8) {
-        ERRORLOG("write to waeup fd less than 8 bytes, df[%d]", m_fd);
+        ERRORLOG("write to wakeup fd less than 8 bytes, df[%d]", m_fd);
     }
 
-    DEBUGLOG("sucess read 8 bytes");
+    DEBUGLOG("sucess write 8 bytes");
 }
 
 }

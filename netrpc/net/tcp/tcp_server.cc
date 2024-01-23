@@ -1,5 +1,6 @@
 #include "netrpc/net/tcp/tcp_server.h"
 #include "netrpc/net/eventloop.h"
+#include "netrpc/net/tcp/tcp_connection.h"
 #include "netrpc/common/log.h"
 
 namespace netrpc {
@@ -31,8 +32,22 @@ void TcpServer::init() {
 }
 
 void TcpServer::onAccept() {
-    int client_fd = m_acceptor->accept();
+    // int client_fd = m_acceptor->accept();
+    // m_client_counts ++;
+
+    // INFOLOG("TcpServer succ get client, fd=%d", client_fd);
+    auto re = m_acceptor->accept();
+    int client_fd = re.first;
+    NetAddr::NetAddrPtr peer_addr = re.second;
+
     m_client_counts ++;
+
+    // 把 clientfd 添加到任意 IO 线程里面
+    IOThread* io_thread = m_io_thread_groups->getIOThread();
+    TcpConnection::TcpConnectionPtr connection = std::make_shared<TcpConnection>(io_thread, client_fd, 128, peer_addr);
+    connection->setState(Connected);
+
+    m_client.insert(connection);
 
     INFOLOG("TcpServer succ get client, fd=%d", client_fd);
 }

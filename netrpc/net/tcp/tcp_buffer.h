@@ -2,11 +2,14 @@
 #define NETRPC_NET_TCP_TCP_BUFFER_H
 
 #include <vector>
+#include <memory>
 
 namespace netrpc {
 
 class TcpBuffer {
 public:
+    using TcpBufferPtr = std::shared_ptr<TcpBuffer>;
+
     TcpBuffer(int size);
 
     ~TcpBuffer();
@@ -38,6 +41,7 @@ private:
     int m_write_index {0};
     int m_size {0};
 
+public:
     std::vector<char> m_buffer;
 };
 

@@ -29,10 +29,11 @@
     } \
     int op = EPOLL_CTL_DEL; \
     epoll_event tmp = event->getEpollEvent(); \
-    int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), &tmp); \
+    int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), NULL); \
     if (rt == -1) { \
       ERRORLOG("failed epoll_ctl when add fd, errno=%d, error=%s", errno, strerror(errno)); \
     } \
+    m_listen_fds.erase(event->getFd()); \
     DEBUGLOG("delete event success, fd[%d]", event->getFd()); \
 
 namespace netrpc {
@@ -126,7 +127,7 @@ void EventLoop::loop() {
         DEBUGLOG("now end epoll_wait, rt = %d", rt);
 
         if (rt < 0) {
-            ERRORLOG("epoll_wait error, errno=", errno);
+            ERRORLOG("epoll_wait error, errno=%d, error=%s", errno, strerror(errno));
         } else {
             for (int i = 0; i < rt; ++ i) {
                 epoll_event trigger_event = result_events[i];

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <memory>
+#include <chrono>
 #include "netrpc/common/log.h"
 #include "netrpc/common/config.h"
 #include "netrpc/net/fd_event.h"
@@ -52,15 +53,17 @@ void test_io_thread() {
 
     int i = 0;
     netrpc::TimerEvent::TimerEventPtr timer_event = std::make_shared<netrpc::TimerEvent> (
-        100, true, [&i]() {
+        2000, true, [&i]() {
             INFOLOG("trigger timer event, count=%d", i++);
         }
     );
 
-    netrpc::IOThreadGroup io_thread_group(2);
+    netrpc::IOThreadGroup io_thread_group(1);
     netrpc::IOThread* io_thread = io_thread_group.getIOThread();
     io_thread->getEventLoop()->addEpollEvent(&event);
-    netrpc::IOThread* io_thread2 = io_thread_group.getIOThread();
+    io_thread->getEventLoop()->addTimerEvent(timer_event);
+    // netrpc::IOThread* io_thread2 = io_thread_group.getIOThread();
+    // io_thread2->getEventLoop()->addTimerEvent(timer_event);
 
     io_thread_group.start();
     io_thread_group.join();

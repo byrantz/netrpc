@@ -4,6 +4,7 @@
 #include <sstream>
 #include <sys/time.h>
 #include <stdio.h>
+#include <iostream>
 
 namespace netrpc {
 
@@ -12,6 +13,7 @@ namespace netrpc {
 
 
 void Logger::Init() {
+
   LogLevel global_log_level = StringToLogLevel(Config::GetInst().m_log_level);
   printf("Init log level [%s]\n", LogLevelToString(global_log_level).c_str());
   m_set_level = global_log_level;

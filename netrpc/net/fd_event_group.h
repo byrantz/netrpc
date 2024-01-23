@@ -13,6 +13,9 @@ public:
     ~FdEventGroup();
     FdEvent* getFdEvent(int fd);
 
+public:
+    static FdEventGroup* GetFdEventGroup();
+
 private:
     int m_size {0};
     std::vector<FdEvent*> m_fd_group;

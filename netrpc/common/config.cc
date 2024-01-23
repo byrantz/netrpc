@@ -1,4 +1,6 @@
 #include <tinyxml/tinyxml.h>
+#include <typeinfo>
+#include <iostream>
 #include "netrpc/common/config.h"
 
 #define READ_XML_NODE(name, parent) \
