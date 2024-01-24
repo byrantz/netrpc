@@ -77,7 +77,7 @@ PRINT-% : ; @echo $* = $($*)
 
 # to clean 
 clean :
-	rm -f $(COMM_OBJ) $(NET_OBJ) $(TESTCASES) $(TEST_CASE_OUT) $(PATH_LIB)/libnetrpc.a $(PATH_OBJ)/libnetrpc.a
+	rm -f $(COMM_OBJ) $(NET_OBJ) $(TESTCASES) $(TEST_CASE_OUT) $(PATH_LIB)/libnetrpc.a $(PATH_OBJ)/libnetrpc.a $(PATH_OBJ)/*.o
 
 # install
 install:

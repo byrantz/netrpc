@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include "netrpc/common/log.h"
 #include "netrpc/common/config.h"
+#include "netrpc/net/tcp/net_addr.h"
+#include "netrpc/net/tcp/tcp_client.h"
+#include "netrpc/net/string_coder.h"
 
 void test_connect() {
     // 调用 connect 连接 server
@@ -44,11 +47,36 @@ void test_connect() {
     DEBUGLOG("success read %d bytes, [%s]", rt, std::string(buf).c_str());
 }
 
+void test_tcp_client() {
+    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12345);
+    netrpc::TcpClient client(addr);
+    client.connect([addr, &client]() {
+        DEBUGLOG("connect to [%s] success", addr->toString().c_str());
+        std::shared_ptr<netrpc::StringProtocol> message = std::make_shared<netrpc::StringProtocol>();
+        message->info = "hello netrpc";
+        message->setReqId("123456");
+        client.writeMessage(message, [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+            DEBUGLOG("send message success");
+        });
+
+        client.readMessage("123456", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+            std::shared_ptr<netrpc::StringProtocol> message = std::dynamic_pointer_cast<netrpc::StringProtocol>(msg_ptr);
+            DEBUGLOG("req_id[%s], get response %s", message->getReqId().c_str(), message->info.c_str());
+        });
+
+        client.writeMessage(message, [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+            DEBUGLOG("send message 22222 success");
+        });
+
+    });
+}
+
 int main() {
     netrpc::Config::GetInst().Init("../conf/netrpc.xml");
     
     netrpc::Logger::GetInst().Init();
 
-    test_connect();
+    // test_connect();
+    test_tcp_client();
     return 0;
 }

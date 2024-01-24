@@ -103,6 +103,7 @@ void EventLoop::initWakeUpFdEvent() {
 }
 
 void EventLoop::loop() {
+    m_is_looping = true;
     while (!m_quit) {
         std::unique_lock<std::mutex> lock(m_mutex);
         std::queue<std::function<void()>> tmp_tasks;
@@ -174,6 +175,17 @@ void EventLoop::addEpollEvent(FdEvent* event) {
     }
 }
 
+void EventLoop::deleteEpollEvent(FdEvent* event) {
+    if (isInLoopThread()) {
+        DELETE_TO_EPOLL();
+    } else {
+        auto cb = [this, event]() {
+            DELETE_TO_EPOLL();
+        };
+        addTask(cb, true);
+    }
+}
+
 void EventLoop::addTask(std::function<void()> cb, bool is_wake_up) {
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -195,6 +207,10 @@ EventLoop* EventLoop::GetCurrentEventLoop() {
     }
     t_current_eventloop = new EventLoop();
     return t_current_eventloop;
+}
+
+bool EventLoop::isLooping() {
+    return m_is_looping;
 }
 
 }
