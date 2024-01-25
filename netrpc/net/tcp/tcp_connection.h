@@ -8,6 +8,7 @@
 #include "netrpc/net/tcp/tcp_buffer.h"
 #include "netrpc/net/io_thread.h"
 #include "netrpc/net/coder/abstract_coder.h"
+#include "netrpc/net/rpc/rpc_dispatcher.h"
 
 namespace netrpc {
 
@@ -27,7 +28,7 @@ class TcpConnection {
 public:
     using TcpConnectionPtr = std::shared_ptr<TcpConnection>;
 public:
-    TcpConnection(EventLoop* eventloop, int fd, int buffer_size, NetAddr::NetAddrPtr peer_addr, TcpConnectionType type = TcpConnectionByServer);
+    TcpConnection(EventLoop* eventloop, int fd, int buffer_size, NetAddr::NetAddrPtr peer_addr, NetAddr::NetAddrPtr local_addr, TcpConnectionType type = TcpConnectionByServer);
 
     ~TcpConnection();
 
@@ -57,6 +58,11 @@ public:
     void pushSendMessage(AbstractProtocol::AbstractProtocolPtr message, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
     
     void pushReadMessage(const std::string& req_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
+
+    NetAddr::NetAddrPtr getLocalAddr();
+
+    NetAddr::NetAddrPtr getPeerAddr();
+
 private:
     EventLoop* m_eventloop {NULL}; // 代表持有该连接的 IO 线程
 
