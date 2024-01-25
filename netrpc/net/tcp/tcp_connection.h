@@ -7,7 +7,7 @@
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/tcp/tcp_buffer.h"
 #include "netrpc/net/io_thread.h"
-#include "netrpc/net/abstract_coder.h"
+#include "netrpc/net/coder/abstract_coder.h"
 
 namespace netrpc {
 

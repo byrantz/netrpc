@@ -12,7 +12,10 @@
 #include "netrpc/common/config.h"
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/tcp/tcp_client.h"
-#include "netrpc/net/string_coder.h"
+#include "netrpc/net/coder/string_coder.h"
+#include "netrpc/net/coder/abstract_protocol.h"
+#include "netrpc/net/coder/tinypb_coder.h"
+#include "netrpc/net/coder/tinypb_protocol.h"
 
 void test_connect() {
     // 调用 connect 连接 server
@@ -52,16 +55,16 @@ void test_tcp_client() {
     netrpc::TcpClient client(addr);
     client.connect([addr, &client]() {
         DEBUGLOG("connect to [%s] success", addr->toString().c_str());
-        std::shared_ptr<netrpc::StringProtocol> message = std::make_shared<netrpc::StringProtocol>();
-        message->info = "hello netrpc";
-        message->setReqId("123456");
+        std::shared_ptr<netrpc::TinyPBProtocol> message = std::make_shared<netrpc::TinyPBProtocol>();
+        message->m_req_id = "123456789";
+        message->m_pb_data = "test pb data";
         client.writeMessage(message, [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
             DEBUGLOG("send message success");
         });
 
-        client.readMessage("123456", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
-            std::shared_ptr<netrpc::StringProtocol> message = std::dynamic_pointer_cast<netrpc::StringProtocol>(msg_ptr);
-            DEBUGLOG("req_id[%s], get response %s", message->getReqId().c_str(), message->info.c_str());
+        client.readMessage("123456789", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+            std::shared_ptr<netrpc::TinyPBProtocol> message = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg_ptr);
+            DEBUGLOG("req_id[%s], get response %s", message->m_req_id.c_str(), message->m_pb_data.c_str());
         });
 
         client.writeMessage(message, [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {

@@ -2,7 +2,8 @@
 #include "netrpc/common/log.h"
 #include "netrpc/net/fd_event_group.h"
 #include "netrpc/net/tcp/tcp_connection.h"
-#include "netrpc/net/string_coder.h"
+#include "netrpc/net/coder/string_coder.h"
+#include "netrpc/net/coder/tinypb_coder.h"
 
 namespace netrpc {
 
@@ -15,7 +16,7 @@ TcpConnection::TcpConnection(EventLoop* eventloop, int fd, int buffer_size, NetA
         m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(fd);
         m_fd_event->setNonBlock();
         
-        m_coder = new StringCoder();
+        m_coder = new TinyPBCoder();
 
         if (m_connection_type == TcpConnectionByServer) {
             listenRead();
@@ -82,20 +83,24 @@ void TcpConnection::onRead() {
 void TcpConnection::excute() {
     if (m_connection_type == TcpConnectionByServer) {
         // 将 RPC 请求执行业务逻辑，获取 RPC 响应，再把 RPC 响应发送回去
-        std::vector<char> tmp;
-        int size = m_in_buffer->readAble();
-        tmp.resize(size);
-        m_in_buffer->readFromBuffer(tmp, size);
+        std::vector<AbstractProtocol::AbstractProtocolPtr> result;
+        std::vector<AbstractProtocol::AbstractProtocolPtr> replay_messages;
+        m_coder->decode(result, m_in_buffer);
 
-        // buffer 的 vector char 转换为 string
         std::string msg;
-        for (size_t i = 0; i < tmp.size(); ++ i) {
-            msg += tmp[i];
+        for (size_t i = 0; i < result.size(); ++ i) {
+            // 1. 针对每一个请求，调用 rpc 方法，获取响应 message
+            // 2. 将响应 message 放入到缓冲区，监听可写事件回包
+            INFOLOG("sucsess get request[%s] from client[%s]", result[i]->m_req_id.c_str(), m_peer_addr->toString().c_str());
+        
+            std::shared_ptr<TinyPBProtocol> message = std::make_shared<TinyPBProtocol>();
+            message->m_pb_data = "hello, this is netrpc rpc test data";
+            message->m_req_id = result[i]->m_req_id;
+            replay_messages.emplace_back(message);
         }
 
-        INFOLOG("success get request[%s] from client[%s]", msg.c_str(), m_peer_addr->toString().c_str());
-        m_out_buffer->writeToBuffer(msg.c_str(), msg.length());
-
+        m_coder->encode(replay_messages, m_out_buffer);
+        // 启动监听可写事件
         listenWrite();
     } else {
         // 从 buffer 里 decode 得到 message 对象，执行其回调
@@ -103,7 +108,7 @@ void TcpConnection::excute() {
         m_coder->decode(result, m_in_buffer);
 
         for (size_t i = 0; i < result.size(); ++ i) {
-            std::string req_id = result[i]->getReqId();
+            std::string req_id = result[i]->m_req_id;
             auto it = m_read_dones.find(req_id);
             if (it != m_read_dones.end()) {
                 it->second(result[i]);

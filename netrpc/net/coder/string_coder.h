@@ -1,8 +1,8 @@
 #ifndef NETRPC_NET_STRING_CODER_H
 #define NETRPC_NET_STRING_CODER_H
 
-#include "netrpc/net/abstract_coder.h"
-#include "netrpc/net/abstract_protocol.h"
+#include "netrpc/net/coder/abstract_coder.h"
+#include "netrpc/net/coder/abstract_protocol.h"
 
 namespace netrpc {
 
@@ -31,7 +31,7 @@ class StringCoder : public AbstractCoder {
 
         std::shared_ptr<StringProtocol> msg = std::make_shared<StringProtocol>();
         msg->info = info;
-        msg->setReqId("123456");
+        msg->m_req_id = "123456";
         out_messages.push_back(msg);
     }
 };
