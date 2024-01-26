@@ -57,7 +57,7 @@ public:
 
     void pushSendMessage(AbstractProtocol::AbstractProtocolPtr message, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
     
-    void pushReadMessage(const std::string& req_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
+    void pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
 
     NetAddr::NetAddrPtr getLocalAddr();
 
@@ -84,7 +84,7 @@ private:
 
     std::vector<std::pair<AbstractProtocol::AbstractProtocolPtr, std::function<void(AbstractProtocol::AbstractProtocolPtr)>>> m_write_dones;
 
-    // key 为 req_id
+    // key 为 msg_id
     std::map<std::string, std::function<void(AbstractProtocol::AbstractProtocolPtr)>> m_read_dones;
 };
 

@@ -158,6 +158,7 @@ void EventLoop::wakeup() {
 
 void EventLoop::stop() {
     m_quit = true;
+    wakeup();
 }
 
 void EventLoop::dealWakeup() {

@@ -1,6 +1,7 @@
 #ifndef NETRPC_NET_TCP_TCP_CLIENT_H
 #define NETRPC_NET_TCP_TCP_CLIENT_H
 
+#include <memory>
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/eventloop.h"
 #include "netrpc/net/tcp/tcp_connection.h"
@@ -10,6 +11,8 @@ namespace netrpc {
 
 class TcpClient {
 public:
+    using TcpClientPtr = std::shared_ptr<TcpClient>;
+
     TcpClient(NetAddr::NetAddrPtr peer_addr);
 
     ~TcpClient();
@@ -24,8 +27,10 @@ public:
 
     // 异步的读取 message
     // 如果读取 message 成功，会调用 done 函数，函数的入参就是 message 对象
-    void readMessage(const std::string& req_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
+    void readMessage(const std::string& msg_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done);
 
+    void stop();
+    
 private:
     NetAddr::NetAddrPtr m_peer_addr;
     EventLoop* m_eventloop {NULL};

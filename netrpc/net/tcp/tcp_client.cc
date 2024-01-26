@@ -77,6 +77,12 @@ void TcpClient::connect(std::function<void()> done) {
     }
 }
 
+void TcpClient::stop() {
+    if (m_eventloop->isLooping()) {
+        m_eventloop->stop();
+    }
+}
+
 // 异步发送 message
 void TcpClient::writeMessage(AbstractProtocol::AbstractProtocolPtr message, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done) {
     // 1. 把 message 对象写入到 Connection 的 buffer，done 也写入
@@ -87,10 +93,10 @@ void TcpClient::writeMessage(AbstractProtocol::AbstractProtocolPtr message, std:
 
 // 异步的读取 message
 // 如果读取 message 成功，会调用 done 函数，函数的入参就是 message 对象
-void TcpClient::readMessage(const std::string& req_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done) {
+void TcpClient::readMessage(const std::string& msg_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done) {
     // 1. 监听可读事件
-    // 2. 从 buffer 里 decode 得到 message 对象，判断是否 req_id 相等，相等则读成功，执行其回调
-    m_connection->pushReadMessage(req_id, done);
+    // 2. 从 buffer 里 decode 得到 message 对象，判断是否 msg_id 相等，相等则读成功，执行其回调
+    m_connection->pushReadMessage(msg_id, done);
     m_connection->listenRead();
 }
 }

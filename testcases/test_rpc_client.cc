@@ -21,6 +21,10 @@
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/tcp/tcp_server.h"
 #include "netrpc/net/rpc/rpc_dispatcher.h"
+#include "netrpc/net/rpc/rpc_controller.h"
+#include "netrpc/net/rpc/rpc_channel.h"
+#include "netrpc/net/rpc/rpc_closure.h"
+
 #include "order.pb.h"
 
 void test_tcp_client() {
@@ -29,7 +33,7 @@ void test_tcp_client() {
     client.connect([addr, &client]() {
         DEBUGLOG("connect to [%s] success", addr->toString().c_str());
         std::shared_ptr<netrpc::TinyPBProtocol> message = std::make_shared<netrpc::TinyPBProtocol>();
-        message->m_req_id = "99998888";
+        message->m_msg_id = "99998888";
         message->m_pb_data = "test pb data";
 
         makeOrderRequest request;
@@ -49,7 +53,7 @@ void test_tcp_client() {
 
         client.readMessage("99998888", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
             std::shared_ptr<netrpc::TinyPBProtocol> message = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg_ptr);
-            DEBUGLOG("req_id[%s], get response %s", message->m_req_id.c_str(), message->m_pb_data.c_str());
+            DEBUGLOG("msg_id[%s], get response %s", message->m_msg_id.c_str(), message->m_pb_data.c_str());
             makeOrderResponse response;
 
             if (!response.ParseFromString(message->m_pb_data)) {
@@ -62,12 +66,40 @@ void test_tcp_client() {
     });
 }
 
+void test_rpc_channel() {
+    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12345);
+    std::shared_ptr<netrpc::RpcChannel> channel = std::make_shared<netrpc::RpcChannel>(addr);
+
+    std::shared_ptr<makeOrderRequest> request = std::make_shared<makeOrderRequest>();
+    request->set_price(100);
+    request->set_goods("apple");
+
+    std::shared_ptr<makeOrderResponse> response = std::make_shared<makeOrderResponse>();
+
+    std::shared_ptr<netrpc::RpcController> controller = std::make_shared<netrpc::RpcController>();
+    controller->SetMsgId("99998888");
+
+    std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>([request, response, channel]() mutable {
+        INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
+        INFOLOG("now exit eventloop");
+        channel->getTcpClient()->stop();
+        channel.reset();
+    });
+
+    channel->Init(controller, request, response, closure);
+
+    Order_Stub stub(channel.get());
+
+    stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
+}
+
 int main() {
     netrpc::Config::GetInst().Init("../conf/netrpc.xml");
     
     netrpc::Logger::GetInst().Init();
 
     // test_connect();
-    test_tcp_client();
+    // test_tcp_client();
+    test_rpc_channel();
     return 0;
 }

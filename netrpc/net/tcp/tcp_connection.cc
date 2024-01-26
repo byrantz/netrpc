@@ -91,11 +91,11 @@ void TcpConnection::excute() {
         for (size_t i = 0; i < result.size(); ++ i) {
             // 1. 针对每一个请求，调用 rpc 方法，获取响应 message
             // 2. 将响应 message 放入到缓冲区，监听可写事件回包
-            INFOLOG("sucsess get request[%s] from client[%s]", result[i]->m_req_id.c_str(), m_peer_addr->toString().c_str());
+            INFOLOG("sucsess get request[%s] from client[%s]", result[i]->m_msg_id.c_str(), m_peer_addr->toString().c_str());
         
             std::shared_ptr<TinyPBProtocol> message = std::make_shared<TinyPBProtocol>();
             // message->m_pb_data = "hello, this is netrpc rpc test data";
-            // message->m_req_id = result[i]->m_req_id;
+            // message->m_msg_id = result[i]->m_msg_id;
             RpcDispatcher::GetInst().dispatch(result[i], message, this);
             replay_messages.emplace_back(message);
         }
@@ -109,8 +109,8 @@ void TcpConnection::excute() {
         m_coder->decode(result, m_in_buffer);
 
         for (size_t i = 0; i < result.size(); ++ i) {
-            std::string req_id = result[i]->m_req_id;
-            auto it = m_read_dones.find(req_id);
+            std::string msg_id = result[i]->m_msg_id;
+            auto it = m_read_dones.find(msg_id);
             if (it != m_read_dones.end()) {
                 it->second(result[i]);
             }
@@ -229,8 +229,8 @@ void TcpConnection::pushSendMessage(AbstractProtocol::AbstractProtocolPtr messag
     m_write_dones.push_back(std::make_pair(message, done));
 }
 
-void TcpConnection::pushReadMessage(const std::string& req_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done) {
-    m_read_dones.insert(std::make_pair(req_id, done));
+void TcpConnection::pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::AbstractProtocolPtr)> done) {
+    m_read_dones.insert(std::make_pair(msg_id, done));
 }
 
 NetAddr::NetAddrPtr TcpConnection::getLocalAddr() {

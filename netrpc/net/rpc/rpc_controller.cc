@@ -5,7 +5,7 @@ namespace netrpc {
 void RpcController::Reset() {
   m_error_code = 0;
   m_error_info = "";
-  m_req_id = "";
+  m_msg_id = "";
   m_is_failed = false;
   m_is_canceled = false;
   m_local_addr = nullptr;
@@ -41,6 +41,7 @@ void RpcController::NotifyOnCancel(google::protobuf::Closure* callback) {
 void RpcController::SetError(int32_t error_code, const std::string error_info) {
   m_error_code = error_code;
   m_error_info = error_info;
+  m_is_failed = true;
 }
 
 int32_t RpcController::GetErrorCode() {
@@ -51,12 +52,12 @@ std::string RpcController::GetErrorInfo() {
   return m_error_info;
 }
 
-void RpcController::SetReqId(const std::string& req_id) {
-  m_req_id = req_id;
+void RpcController::SetMsgId(const std::string& msg_id) {
+  m_msg_id = msg_id;
 }
 
-std::string RpcController::GetReqId() {
-  return m_req_id;
+std::string RpcController::GetMsgId() {
+  return m_msg_id;
 }
 
 void RpcController::SetLocalAddr(NetAddr::NetAddrPtr addr) {
