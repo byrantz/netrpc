@@ -9,6 +9,7 @@
 #include "netrpc/common/log.h"
 #include "netrpc/common/msg_id_util.h"
 #include "netrpc/common/error_code.h"
+#include <memory>
 
 namespace netrpc {
 
@@ -59,30 +60,63 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     RpcChannelPtr channel = shared_from_this();
 
-    m_client->connect([req_protocol, channel]() mutable {
-        channel->getTcpClient()->writeMessage(req_protocol, [req_protocol, channel](AbstractProtocol::AbstractProtocolPtr) mutable {
-            INFOLOG("%s | send rpc request success. call method name[%s]",
-                req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str());
+  m_client->connect([req_protocol, channel]() mutable {
 
-            channel->getTcpClient()->readMessage(req_protocol->m_msg_id, [channel](AbstractProtocol::AbstractProtocolPtr msg) mutable {
-                std::shared_ptr<netrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg);
-                INFOLOG("%s | success get rpc response, call method name[%s]", rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str());
-                
-                RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
-                if (!(channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data))) {
-                    ERRORLOG("%s | serialize error", rsp_protocol->m_msg_id.c_str());
-                    my_controller->SetError(ERROR_FAILED_SERIALIZE, "serialize error");
-                    return;
-                }
+    RpcController* my_controller = dynamic_cast<RpcController*>(channel->getController());
 
-                if (channel->getClosure()) {
-                    channel->getClosure()->Run();
-                }
+    if (channel->getTcpClient()->getConnectErrorCode() != 0) {
+      my_controller->SetError(channel->getTcpClient()->getConnectErrorCode(), channel->getTcpClient()->getConnectErrorInfo());
+      ERRORLOG("%s | connect error, error coode[%d], error info[%s], peer addr[%s]", 
+        req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
+        my_controller->GetErrorInfo().c_str(), channel->getTcpClient()->getPeerAddr()->toString().c_str());
+      return;
+    }
 
-                channel.reset();
-            });
-        });
+    INFOLOG("%s | connect success, peer addr[%s], local addr[%s]",
+      req_protocol->m_msg_id.c_str(), 
+      channel->getTcpClient()->getPeerAddr()->toString().c_str(), 
+      channel->getTcpClient()->getLocalAddr()->toString().c_str()); 
+
+    channel->getTcpClient()->writeMessage(req_protocol, [req_protocol, channel, my_controller](AbstractProtocol::AbstractProtocolPtr) mutable {
+      INFOLOG("%s | send rpc request success. call method name[%s], peer addr[%s], local addr[%s]", 
+        req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
+        channel->getTcpClient()->getPeerAddr()->toString().c_str(), channel->getTcpClient()->getLocalAddr()->toString().c_str());
+
+      channel->getTcpClient()->readMessage(req_protocol->m_msg_id, [channel, my_controller](AbstractProtocol::AbstractProtocolPtr msg) mutable {
+        std::shared_ptr<netrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg);
+        INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]", 
+          rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+          channel->getTcpClient()->getPeerAddr()->toString().c_str(), channel->getTcpClient()->getLocalAddr()->toString().c_str());
+
+        if (!(channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data))){
+          ERRORLOG("%s | serialize error", rsp_protocol->m_msg_id.c_str());
+          my_controller->SetError(ERROR_FAILED_SERIALIZE, "serialize error");
+          return;
+        }
+
+        if (rsp_protocol->m_err_code != 0) {
+          ERRORLOG("%s | call rpc methood[%s] failed, error code[%d], error info[%s]", 
+            rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+            rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
+
+          my_controller->SetError(rsp_protocol->m_err_code, rsp_protocol->m_err_info);
+          return;
+        }
+
+        INFOLOG("%s | call rpc success, call method name[%s], peer addr[%s], local addr[%s]",
+          rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+          channel->getTcpClient()->getPeerAddr()->toString().c_str(), channel->getTcpClient()->getLocalAddr()->toString().c_str())
+
+        if (channel->getClosure()) {
+          channel->getClosure()->Run();
+        }
+
+        channel.reset();
+      });
+      
     });
+
+  });
 
 }
 
