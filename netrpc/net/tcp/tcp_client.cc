@@ -148,4 +148,8 @@ void TcpClient::initLocalAddr() {
 
 }
 
+void TcpClient::addTimerEvent(TimerEvent::TimerEventPtr timer_event) {
+    m_eventloop->addTimerEvent(timer_event);
+}
+
 }

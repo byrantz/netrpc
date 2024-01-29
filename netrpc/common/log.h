@@ -6,7 +6,7 @@
 #include <memory>
 #include <mutex>
 
-#include "netrpc/common/mutex.h"
+#include "netrpc/common/config.h"
 
 namespace netrpc {
 
@@ -60,12 +60,16 @@ enum LogLevel {
     Info = 2,
     Error = 3
 };
+
+std::string LogLevelToString(LogLevel level);
+
+LogLevel StringToLogLevel(const std::string& log_level);
 /* 1. 提供打印日志的方法 2. 设置日志输出的路径*/
 class Logger {
 public:
-    typedef std::shared_ptr<Logger> s_ptr;
+    typedef std::shared_ptr<Logger> LoggerPtr;
 
-    // Logger(LogLevel level) : m_set_level(level) {}
+    Logger(LogLevel level) : m_set_level(level) {}
 
     void pushLog(const std::string& msg);
 
@@ -97,9 +101,6 @@ private:
     
 };
 
-std::string LogLevelToString(LogLevel level);
-
-LogLevel StringToLogLevel(const std::string& log_level);
 
 class LogEvent {
 public:

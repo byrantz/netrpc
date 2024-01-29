@@ -6,6 +6,7 @@
 #include "netrpc/net/eventloop.h"
 #include "netrpc/net/tcp/tcp_connection.h"
 #include "netrpc/net/coder/abstract_protocol.h"
+#include "netrpc/net/timer_event.h"
 
 namespace netrpc {
 
@@ -40,6 +41,8 @@ public:
     NetAddr::NetAddrPtr getLocalAddr();
 
     void initLocalAddr();
+
+    void addTimerEvent(TimerEvent::TimerEventPtr timer_event);
 
 private:
     NetAddr::NetAddrPtr m_peer_addr;
