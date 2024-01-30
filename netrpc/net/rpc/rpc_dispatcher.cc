@@ -9,6 +9,7 @@
 #include "netrpc/net/rpc/rpc_controller.h"
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/tcp/tcp_connection.h"
+#include "netrpc/common/run_time.h"
 
 namespace netrpc {
 
@@ -65,6 +66,9 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
     rpcController.SetLocalAddr(connection->getLocalAddr());
     rpcController.SetPeerAddr(connection->getPeerAddr());
     rpcController.SetMsgId(req_protocol->m_msg_id);
+
+    RunTime::GetRunTime()->m_msgid = req_protocol->m_msg_id;
+    RunTime::GetRunTime()->m_method_name = method_name;
 
     service->CallMethod(method, &rpcController, req_msg, rsp_msg, NULL);
     if (!rsp_msg->SerializeToString(&(rsp_protocol->m_pb_data))) {

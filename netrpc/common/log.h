@@ -5,8 +5,10 @@
 #include <queue>
 #include <memory>
 #include <mutex>
-
+#include <semaphore.h>
+#include <condition_variable>
 #include "netrpc/common/config.h"
+#include "netrpc/net/timer_event.h"
 
 namespace netrpc {
 
@@ -32,7 +34,6 @@ std::string formatString(const char* str, Args&&... args) {
     { \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Debug)).toString() \
         + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
-        netrpc::Logger::GetInst().log(); \
     } \
 
 #define INFOLOG(str, ...) \
@@ -40,7 +41,6 @@ std::string formatString(const char* str, Args&&... args) {
     { \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Info)).toString() \
         + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
-        netrpc::Logger::GetInst().log(); \
     } \
 
 #define ERRORLOG(str, ...) \
@@ -48,10 +48,29 @@ std::string formatString(const char* str, Args&&... args) {
     { \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Error)).toString() \
         + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
-        netrpc::Logger::GetInst().log(); \
     } \
 
-    
+#define APPDEBUGLOG(str, ...) \
+    if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Debug) \
+    { \
+        netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Debug)).toString() \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+    } \
+
+#define APPINFOLOG(str, ...) \
+    if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Info) \
+    { \
+        netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Info)).toString() \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
+    } \
+
+#define APPERRORLOG(str, ...) \
+    if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Error) \
+    { \
+        netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Error)).toString() \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+    } \
+
 
 
 enum LogLevel {
@@ -64,20 +83,67 @@ enum LogLevel {
 std::string LogLevelToString(LogLevel level);
 
 LogLevel StringToLogLevel(const std::string& log_level);
+
+class AsyncLogger {
+public:
+    using AsyncLoggerPtr = std::shared_ptr<AsyncLogger>;
+    AsyncLogger(const std::string& file_name, const std::string& file_path, int max_size);
+
+    void stop();
+
+    // 刷新到磁盘
+    void flush();
+
+    void pushLogBuffer(std::vector<std::string>& vec);
+
+public:
+    static void* Loop(void*);
+
+private:
+    // m_file_path/m_file_name_yyyymmdd.0
+
+    std::queue<std::vector<std::string>> m_buffer;
+
+    std::string m_file_name; // 日志输出文件名字
+    std::string m_file_path; // 日志输出路径
+    int m_max_file_size {0}; // 日志单个文件最大大小，单位为字节
+
+    sem_t m_sempahore;
+    pthread_t m_thread;
+
+    // pthread_cond_t m_condition; // 条件变量
+    std::condition_variable m_condvariable;
+    std::mutex m_mutex;
+
+    std::string m_date; // 当前打印日志的文件日期
+    FILE* m_file_handler {NULL}; // 当前打开的日志文件句柄
+
+    bool m_reopen_flag {false};
+
+    int m_no {0}; // 日志文件序号
+
+    bool m_stop_flag {false};
+
+};
+
 /* 1. 提供打印日志的方法 2. 设置日志输出的路径*/
 class Logger {
 public:
     typedef std::shared_ptr<Logger> LoggerPtr;
 
-    Logger(LogLevel level) : m_set_level(level) {}
+    Logger(LogLevel level, int type = 1);
 
     void pushLog(const std::string& msg);
+
+    void pushAppLog(const std::string& msg);
 
     void log();
 
     LogLevel getLogLevel() const {
         return m_set_level;
     }
+
+    void syncLoop();
 
 public:
     // Singleton, delete copy construct
@@ -90,14 +156,28 @@ public:
     }
     
 
-    void Init();
+    void Init(int type = 1);
 
 private:
     Logger() = default;
     LogLevel m_set_level;
-    std::queue<std::string> m_buffer;
+    std::vector<std::string> m_buffer;
+
+    std::vector<std::string> m_app_buffer;
 
     std::mutex m_mutex;
+    std::mutex m_app_mutex;
+
+    std::string m_file_name;
+    std::string m_file_path;
+    int m_max_file_size {0};
+
+    AsyncLogger::AsyncLoggerPtr m_asnyc_logger;
+    AsyncLogger::AsyncLoggerPtr m_asnyc_app_logger;
+
+    TimerEvent::TimerEventPtr m_timer_event;
+
+    int m_type {0};
     
 };
 

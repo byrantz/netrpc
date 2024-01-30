@@ -31,37 +31,39 @@ public:
                         const ::makeOrderRequest* request,
                         ::makeOrderResponse* response,
                         ::google::protobuf::Closure* done) {
-        DEBUGLOG("start sleep 5s");
+        APPDEBUGLOG("start sleep 5s");
         sleep(5);
-        DEBUGLOG("end sleep 5s");
+        APPDEBUGLOG("end sleep 5s");
         if (request->price() < 10) {
             response->set_ret_code(-1);
             response->set_res_info("short balance");
             return;
         }
         response->set_order_id("20240125");
+        APPDEBUGLOG("call makeOrder success");
     }
 };
 
-void test_tcp_server() {
-    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12345);
 
-    DEBUGLOG("create addr %s", addr->toString().c_str());
-
-    netrpc::TcpServer tcp_server(addr);
-
-    tcp_server.start();
-}
-
-int main() {
+int main(int argc, char* argv[]) {
+    // if (argc != 2) {
+    //     printf("Start test_rpc_server error, argc not 2 \n");
+    //     printf("Start like this: \n");
+    //     printf("./test_rpc_server ../conf/netrpc.xml \n");
+    //     return 0;
+    // }
 
     netrpc::Config::GetInst().Init("../conf/netrpc.xml");
-    netrpc::Logger::GetInst().Init();
+    netrpc::Logger::GetInst().Init(1);
 
     std::shared_ptr<OrderImpl> service = std::make_shared<OrderImpl>();
     netrpc::RpcDispatcher::GetInst().registerService(service);
 
-    test_tcp_server();
+    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", netrpc::Config::GetInst().m_port);
+
+    netrpc::TcpServer tcp_server(addr);
+
+    tcp_server.start();
 
     return 0;
 }
