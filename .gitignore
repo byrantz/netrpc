@@ -4,6 +4,11 @@ obj/*
 log/*
 .vscode/
 
+!bin/
+!lib/
+!log/
+!obj/
+
 *.pb.h
 *.pb.cc
 *.out
