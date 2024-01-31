@@ -4,10 +4,10 @@ obj/*
 log/*
 .vscode/
 
-!bin/
-!lib/
-!log/
-!obj/
+!bin/.gitkeep
+!lib/.gitkeep
+!log/.gitkeep
+!obj/.gitkeep
 
 *.pb.h
 *.pb.cc
