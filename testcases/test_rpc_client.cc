@@ -101,7 +101,7 @@ void test_rpc_channel() {
 
     // stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
 
-    CALLRPC("127.0.0.1:12345", makeOrder, controller, request, response, closure);
+    CALLRPC("127.0.0.1:12345", Order_Stub, makeOrder, controller, request, response, closure);
 }
 
 int main() {

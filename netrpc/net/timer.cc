@@ -11,6 +11,7 @@ Timer::Timer() : FdEvent() {
     DEBUGLOG("timer fd = %d", m_fd);
 
     // 把 fd 可读事件放到了 eventloop 上监听
+    // 这里是设置监听事件，以及对应的回调函数
     listen(FdEvent::IN_EVENT, std::bind(&Timer::onTimer, this));
 }
 
@@ -99,6 +100,9 @@ void Timer::resetArriveTime() {
     memset(&value, 0, sizeof(value));
     value.it_value = ts;
 
+    // timerfd_settime 设置超时定时器
+    // 当定时器超时时，它的文件描述符会变为可读状态，可以通过 epoll 或类似的I/O多路复用机制来检测这一状态。
+    // 在 Timer 类的 onTimer 方法中，这一点被用来触发和处理定时事件。
     int rt = timerfd_settime(m_fd, 0, &value, NULL);
     if (rt != 0) {
         ERRORLOG("timerfd_settime error, errno=%d, error=%s", errno, strerror(errno));
