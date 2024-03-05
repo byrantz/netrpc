@@ -189,6 +189,8 @@ void* AsyncLogger::Loop(void* arg) {
         localtime_r(&(now.tv_sec), &now_time);
 
         const char * format = "%Y%m%d";
+        // const char * format = "%Y%m%d%H%M%S";
+
         char date[32];
         strftime(date, sizeof(date), format, &now_time);
 

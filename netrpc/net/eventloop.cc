@@ -139,8 +139,8 @@ void EventLoop::loop() {
                     continue;
                 }
 
-                int event = (int)(trigger_event.events);
-                DEBUGLOG("unknown event = %d", event);
+                // int event = (int)(trigger_event.events);
+                // DEBUGLOG("unknown event = %d", event);
 
                 if (trigger_event.events & EPOLLIN) {
                     DEBUGLOG("fd %d trigger EPOLLIN event", fd_event->getFd());

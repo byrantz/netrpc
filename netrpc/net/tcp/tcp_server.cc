@@ -2,6 +2,7 @@
 #include "netrpc/net/eventloop.h"
 #include "netrpc/net/tcp/tcp_connection.h"
 #include "netrpc/common/log.h"
+#include "netrpc/common/config.h"
 
 namespace netrpc {
 
@@ -23,7 +24,7 @@ void TcpServer::init() {
     m_acceptor = std::make_shared<TcpAcceptor>(m_local_addr);
 
     m_main_eventloop = EventLoop::GetCurrentEventLoop();
-    m_io_thread_groups = new IOThreadGroup(2);
+    m_io_thread_groups = new IOThreadGroup(Config::GetInst().m_io_threads);
 
     m_listen_fd_event = new FdEvent(m_acceptor->getListenFd());
     m_listen_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpServer::onAccept, this));

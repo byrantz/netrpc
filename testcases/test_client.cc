@@ -39,7 +39,7 @@ void test_connect() {
 
     DEBUGLOG("connect success");
 
-    std::string msg = "hello rocket!";
+    std::string msg = "hello netrpc!";
 
     rt = write(fd, msg.c_str(), msg.length());
 

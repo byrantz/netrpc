@@ -7,6 +7,7 @@
 #include <mutex>
 #include <semaphore.h>
 #include <condition_variable>
+#include <sstream>
 #include "netrpc/common/config.h"
 #include "netrpc/net/timer_event.h"
 

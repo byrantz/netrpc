@@ -1,6 +1,6 @@
 # NetRPC框架
 ## 项目介绍
-NetRPC是一个为Linux设计的轻量级、高性能C++ RPC框架。复制解决在分布式服务部署中服务的发布与调用、消息的序列和反序列化、网络包的收发等问题，使其能提供高并发的远程函数调用服务，可以让使用者专注于业务，快速实现微服务的分布式部署。
+NetRPC 是一个为 Linux 设计的轻量级、高性能 C++ RPC 框架。负责解决在分布式服务部署中服务的发布与调用、消息的序列和反序列化、网络包的收发等问题，使其能提供高并发的远程函数调用服务，可以让使用者专注于业务，快速实现微服务的分布式部署。
 
 ## 主要功能
 **服务端发布** ：支持将本地服务注册到 rpc 节点上并启动该服务，等待远程的 rpc 调用；支持执行回调操作，完成响应对象数据的序列化和网络发送
@@ -40,12 +40,43 @@ unzip tinyxml_2_6_2.zip
 
 ## 运行项目
 
-编写RPC方法使用，这里以 `test_rpc_server.cc` 和 `test_rpc_client.cc` 编写服务发布端和服务调用端为例。
+编写RPC方法使用，这里以 `order.proto` 编写服务， `test_rpc_server.cc` 和 `test_rpc_client.cc` 编写服务发布端和服务调用端为例。
+
+```proto
+syntax = "proto3";
+option cc_generic_services = true;
+
+// 定义请求消息
+message makeOrderRequest {
+    int32 price = 1;
+    string goods = 2;
+}
+
+// 定义响应消息
+message makeOrderResponse {
+    int32 ret_code = 1;
+    string res_info = 2;
+    string order_id = 3;
+}
+
+// 定义 RPC 服务
+service Order {
+    rpc makeOrder(makeOrderRequest) returns (makeOrderResponse);
+}
+
+```
+到 `testcases` 目录下, 执行 protoc 编译 
+```shell
+cd testcase
+protoc -I=. order.proto -cpp_out=.
+```
+&nbsp;
 
 **服务发布端**
-```
+```cpp
 #include "order.pb.h"
 
+// 实现服务
 class OrderImpl : public Order {
 
 public:
@@ -86,9 +117,10 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 ```
+&nbsp;
 
 **服务调用端**
-```
+```cpp
 #include "order.pb.h"
 
 void test_rpc_channel() {
@@ -129,11 +161,8 @@ void test_rpc_channel() {
 
 int main() {
     // netrpc::Config::GetInst().Init("../conf/netrpc_client.xml");
-    
     netrpc::Logger::GetInst().Init(0);
 
-    // test_connect();
-    // test_tcp_client();
     test_rpc_channel();
     return 0;
 }
@@ -143,13 +172,13 @@ int main() {
 
 编写完成后，在根目录下直接执行 `make` 命令，之后到 `bin` 目录下启动RPC服务器和客户端进行测试，请使用以下命令：
 
-**启动RPC服务器**
+**启动 RPC 服务器**
 
 ```
 ./test_rpc_server 
 ```
 
-**启动RPC客户端**
+**启动 RPC 客户端**
 
 ```
 ./test_rpc_client
