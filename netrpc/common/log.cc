@@ -107,7 +107,7 @@ std::string LogEvent::toString() {
 
     // 将格式化的字符串存储在 buf 中
     char buf[128];
-    strftime(&buf[0], 128, "%y-%m-%d %H:%M:%d", &now_time_t);
+    strftime(&buf[0], 128, "%y-%m-%d %H:%M:%S", &now_time_t);
     std::string time_str(buf);
     int ms = now_time.tv_usec / 1000;
     time_str = time_str + "." + std::to_string(ms);
