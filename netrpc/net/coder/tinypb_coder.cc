@@ -143,7 +143,7 @@ const char* TinyPBCoder::encodeTinyPB(std::shared_ptr<TinyPBProtocol> message, i
   }
   DEBUGLOG("msg_id = %s", message->m_msg_id.c_str());
   int pk_len = 2 + 24 + message->m_msg_id.length() + message->m_method_name.length() + message->m_err_info.length() + message->m_pb_data.length();
-  DEBUGLOG("pk_len = %", pk_len);
+  DEBUGLOG("pk_len = %d", pk_len);
 
   char* buf = reinterpret_cast<char*>(malloc(pk_len));
   char* tmp = buf;

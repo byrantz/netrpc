@@ -2,6 +2,7 @@ bin/*
 lib/*
 obj/*
 log/*
+build/*
 .vscode/
 
 !bin/.gitkeep

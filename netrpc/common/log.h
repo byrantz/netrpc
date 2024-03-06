@@ -8,6 +8,9 @@
 #include <semaphore.h>
 #include <condition_variable>
 #include <sstream>
+#include <cstdio>
+#include <stdexcept>
+#include <fmt/core.h>
 #include "netrpc/common/config.h"
 #include "netrpc/net/timer_event.h"
 
@@ -30,46 +33,53 @@ std::string formatString(const char* str, Args&&... args) {
     return result;
 }
 
+
 #define DEBUGLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Debug) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Debug)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n"); \
     } \
 
 #define INFOLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Info) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Info)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n");\
     } \
 
 #define ERRORLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Error) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushLog((netrpc::LogEvent(netrpc::LogLevel::Error)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n"); \
     } \
 
 #define APPDEBUGLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Debug) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Debug)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n"); \
     } \
 
 #define APPINFOLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Info) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Info)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n");\
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n");\
     } \
 
 #define APPERRORLOG(str, ...) \
     if (netrpc::Logger::GetInst().getLogLevel() <= netrpc::Error) \
     { \
+        auto msg1 = netrpc::formatString(str, ##__VA_ARGS__); \
         netrpc::Logger::GetInst().pushAppLog((netrpc::LogEvent(netrpc::LogLevel::Error)).toString() \
-        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + netrpc::formatString(str, ##__VA_ARGS__) + "\n"); \
+        + "[" + std::string(__FILE__) + ":" + std::to_string(__LINE__) + "]\t" + msg1 + "\n"); \
     } \
 
 
@@ -130,7 +140,7 @@ private:
 /* 1. 提供打印日志的方法 2. 设置日志输出的路径*/
 class Logger {
 public:
-    typedef std::shared_ptr<Logger> LoggerPtr;
+    using LoggerPtr = std::shared_ptr<Logger>;
 
     Logger(LogLevel level, int type = 1);
 

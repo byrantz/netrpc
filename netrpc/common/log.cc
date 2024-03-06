@@ -96,6 +96,7 @@ LogLevel StringToLogLevel(const std::string& log_level) {
     }
 }
 
+// eg: [INFO]	[24-03-06 16:01:02.116]	[2526464:2526467]	[99998888]	[makeOrder]
 std::string LogEvent::toString() {
     struct timeval now_time;
 
@@ -106,7 +107,7 @@ std::string LogEvent::toString() {
 
     // 将格式化的字符串存储在 buf 中
     char buf[128];
-    strftime(&buf[0], 128, "%y-%m-%d %H:%M:%S", &now_time_t);
+    strftime(&buf[0], 128, "%y-%m-%d %H:%M:%d", &now_time_t);
     std::string time_str(buf);
     int ms = now_time.tv_usec / 1000;
     time_str = time_str + "." + std::to_string(ms);
@@ -136,8 +137,9 @@ std::string LogEvent::toString() {
 }
 
 void Logger::pushLog(const std::string& msg) { 
+    // m_type = 0 表示客户端， 1 表示服务端
     if (m_type == 0) {
-        printf((msg + "\n").c_str());
+        printf("%s\n", msg.c_str());
         return;
     }
     std::lock_guard<std::mutex> lock(m_mutex);
@@ -182,6 +184,7 @@ void* AsyncLogger::Loop(void* arg) {
             lock.unlock();
         }
 
+        // 获取当前时间和格式，用于生成日志文件名中的日期部分
         timeval now;
         gettimeofday(&now, NULL);
 
@@ -189,7 +192,7 @@ void* AsyncLogger::Loop(void* arg) {
         localtime_r(&(now.tv_sec), &now_time);
 
         const char * format = "%Y%m%d";
-        // const char * format = "%Y%m%d%H%M%S";
+        // const char * format = "%Y%m{}%H%M{}";
 
         char date[32];
         strftime(date, sizeof(date), format, &now_time);
@@ -208,14 +211,18 @@ void* AsyncLogger::Loop(void* arg) {
             << std::string(date) << "_log.";
         std::string log_file_name = ss.str() + std::to_string(logger->m_no);
 
+        // 如果需要重新打开文件
         if (logger->m_reopen_flag) {
             if (logger->m_file_handler) {
+                // 先将文件关闭
                 fclose(logger->m_file_handler);
             }
+            // 打开新的日志文件
             logger->m_file_handler = fopen(log_file_name.c_str(), "a");
-            logger->m_reopen_flag = false;
+            logger->m_reopen_flag = false; // 重置重新打开文件标志
         }
 
+        // 如果当前日志文件大小超过最大限制，关闭当前文件，创建新的文件
         if (ftell(logger->m_file_handler) > logger->m_max_file_size) {
             fclose(logger->m_file_handler);
 
@@ -224,6 +231,7 @@ void* AsyncLogger::Loop(void* arg) {
             logger->m_reopen_flag = false;
         }
 
+        // 将 tmp 中的日志消息写入文件，同时用 fflush 刷新文件缓冲区，确保所有内容都写入磁盘
         for (auto& i : tmp) {
             if (!i.empty()) {
                 fwrite(i.c_str(), 1, i.length(), logger->m_file_handler);

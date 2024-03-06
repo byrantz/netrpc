@@ -142,13 +142,13 @@ void test_rpc_channel() {
     // 设置 Rpc 成功后的回调函数
     std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>([request, response, channel, controller]() mutable {
         if (controller->GetErrorCode() == 0) {
-            INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
+            INFOLOG("call rpc success, request[{}], response[{}]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
             // 执行业务逻辑
             if (response->order_id() == "xxx") {
                 // xx
             }  
         } else {
-            ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
+            ERRORLOG("call rpc failed, request[{}], error code[{}], error info[{}]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
         // channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
