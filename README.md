@@ -123,6 +123,9 @@ int main(int argc, char* argv[]) {
 ```cpp
 #include "order.pb.h"
 
+/*1. 首先用 host 和 port 生成 channel
+  2. 在 channel 中根据 stub 发起 rpc 调用*/
+
 void test_rpc_channel() {
     // 服务发布端的地址为 127.0.0.1:12345
     NEWRPCCHANNEL("127.0.0.1:12345", channel);

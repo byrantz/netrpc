@@ -63,6 +63,8 @@ public:
 
     NetAddr::NetAddrPtr getPeerAddr();
 
+    void reply(std::vector<AbstractProtocol::AbstractProtocolPtr>& replay_messages);
+
 private:
     EventLoop* m_eventloop {NULL}; // 代表持有该连接的 IO 线程
 

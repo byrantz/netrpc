@@ -6,13 +6,14 @@
 #include <string>
 
 #include "netrpc/net/tcp/net_addr.h"
+#include "netrpc/common/log.h"
 
 namespace netrpc {
 
 class RpcController : public google::protobuf::RpcController {
 public:
-    RpcController() {}
-    ~RpcController() {}
+    RpcController() {INFOLOG("RpcController");}
+    ~RpcController() {INFOLOG("~RpcController");}
 
     void Reset();
 

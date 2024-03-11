@@ -119,6 +119,12 @@ void TcpConnection::excute() {
 
 }
 
+
+void TcpConnection::reply(std::vector<AbstractProtocol::AbstractProtocolPtr>& replay_messages) {
+    m_coder->encode(replay_messages, m_out_buffer);
+    listenWrite();
+}
+
 void TcpConnection::onWrite() {
     // 将当前 out_buffer 里面的数据全部发送给 client
 
