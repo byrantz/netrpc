@@ -22,16 +22,23 @@ if (!name##_node) { \
 
 namespace netrpc {
 
-void Config::Init(const char* xmlfile) {
-    TiXmlDocument* xml_document = new TiXmlDocument();
+Config::~Config() {
+  if (m_xml_document) {
+    delete m_xml_document;
+    m_xml_document = NULL;
+  }
+}
 
-    bool rt = xml_document->LoadFile(xmlfile);
+void Config::Init(const char* xmlfile) {
+    m_xml_document = new TiXmlDocument();
+
+    bool rt = m_xml_document->LoadFile(xmlfile);
     if (!rt) {
-        printf("Start netrpc server error, failed to read config file %s, error info[%s] \n", xmlfile, xml_document->ErrorDesc());
+        printf("Start netrpc server error, failed to read config file %s, error info[%s] \n", xmlfile, m_xml_document->ErrorDesc());
         exit(0);
     }
 
-    READ_XML_NODE(root, xml_document);
+    READ_XML_NODE(root, m_xml_document);
     READ_XML_NODE(log, root_node);
     READ_XML_NODE(server, root_node);
 

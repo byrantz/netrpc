@@ -41,6 +41,11 @@ public:
         }
         response->set_order_id("20240125");
         APPDEBUGLOG("call makeOrder success");
+        if (done) {
+            done->Run();
+            delete done;
+            done = NULL;
+        }
     }
 };
 

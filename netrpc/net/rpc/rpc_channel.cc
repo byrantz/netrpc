@@ -9,6 +9,7 @@
 #include "netrpc/common/log.h"
 #include "netrpc/common/msg_id_util.h"
 #include "netrpc/common/error_code.h"
+#include "netrpc/common/run_time.h"
 #include "netrpc/net/timer_event.h"
 
 namespace netrpc {
@@ -34,12 +35,22 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
         return;
     }
 
-    if (my_controller->GetMsgId().empty()) {
-        req_protocol->m_msg_id = MsgIDUtil::GenMsgID();
-        my_controller->SetMsgId(req_protocol->m_msg_id);
+  if (my_controller->GetMsgId().empty()) {
+    // 先从 runtime 里面取, 取不到再生成一个
+    // 这样的目的是为了实现 msg_id 的透传，假设服务 A 调用了 B，那么同一个 msgid 可以在服务 A 和 B 之间串起来，方便日志追踪
+    std::string msg_id = RunTime::GetRunTime()->m_msgid;
+    if (!msg_id.empty()) {
+      req_protocol->m_msg_id = msg_id;
+      my_controller->SetMsgId(msg_id);
     } else {
-        req_protocol->m_msg_id = my_controller->GetMsgId();
+      req_protocol->m_msg_id = MsgIDUtil::GenMsgID();
+      my_controller->SetMsgId(req_protocol->m_msg_id);
     }
+
+  } else {
+    // 如果 controller 指定了 msgno, 直接使用
+    req_protocol->m_msg_id = my_controller->GetMsgId();
+  }
 
     req_protocol->m_method_name = method->full_name();
     INFOLOG("%s | call method name [%s]", req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str());
@@ -62,6 +73,11 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     RpcChannelPtr channel = shared_from_this();
 
     m_timer_event = std::make_shared<TimerEvent>(my_controller->GetTimeout(), false, [my_controller, channel]() mutable {
+        if (my_controller->Finished()) {
+          channel.reset();
+          return;
+        }
+        
         my_controller->StartCancel();
         my_controller->SetError(ERROR_RPC_CALL_TIMEOUT, "rpc call timeout " + std::to_string(my_controller->GetTimeout()));
 
@@ -109,11 +125,13 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
           channel->getTcpClient()->getPeerAddr()->toString().c_str(), channel->getTcpClient()->getLocalAddr()->toString().c_str());
         
         // 当成功读取到回包后，取消定时任务
-        channel->getTimerEvent()->setCancled(true); 
+        // channel->getTimerEvent()->setCancled(true); 
+        my_controller->SetFinished(true);
 
         if (!(channel->getResponse()->ParseFromString(rsp_protocol->m_pb_data))){
           ERRORLOG("%s | serialize error", rsp_protocol->m_msg_id.c_str());
           my_controller->SetError(ERROR_FAILED_SERIALIZE, "serialize error");
+          channel.reset();
           return;
         }
 
@@ -123,6 +141,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
             rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
 
           my_controller->SetError(rsp_protocol->m_err_code, rsp_protocol->m_err_info);
+          channel.reset();
           return;
         }
 
@@ -137,7 +156,11 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
         channel.reset();
       });
 
+      channel.reset();
+
     });
+
+    channel.reset();
 
   });
 

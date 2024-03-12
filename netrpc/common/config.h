@@ -2,6 +2,7 @@
 #define NETRPC_COMMON_CONFIG_H
 
 #include <map>
+#include <tinyxml/tinyxml.h>
 
 namespace netrpc {
 
@@ -17,6 +18,8 @@ public:
         return inst;
     }
 
+    ~Config();
+
 
 public:
     std::string m_log_level{"DEBUG"};
@@ -27,6 +30,8 @@ public:
 
     int m_port {0};
     int m_io_threads {0};
+
+    TiXmlDocument* m_xml_document{NULL};
 
 private:
     Config() = default;

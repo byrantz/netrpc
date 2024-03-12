@@ -8,6 +8,8 @@
 
 namespace netrpc {
 
+class RpcClosure;
+
 /*
  * Rpc Interface Base Class
  * All interface should extend this abstract class
@@ -20,22 +22,24 @@ class RpcInterface : public std::enable_shared_from_this<RpcInterface>{
 
   virtual ~RpcInterface();
 
-  // core business deal method
-  virtual void run() = 0;
-
   // set error code and error into to response message
   virtual void setError(long long code, const std::string& err_info) = 0;
 
   // reply to client
   // you should call is when you wan to set response back
   // it means this rpc method done 
-  virtual void reply();
+  void reply();
 
   // free resourse
   void destroy();
 
   // alloc a closure object which handle by this interface
   std::shared_ptr<RpcClosure> newRpcClosure(std::function<void()>& cb);
+
+  // core business deal method
+  virtual void run() = 0;
+
+  virtual void setError(int code, const std::string& err_info) = 0;
 
 
 protected:

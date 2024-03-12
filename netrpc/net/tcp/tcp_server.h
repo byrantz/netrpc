@@ -18,6 +18,9 @@ public:
 
     void start();
 
+    // 消除 closed 的连接
+    void ClearClientTimerFunc();
+
 private:
     void init();
 
@@ -38,6 +41,8 @@ private:
     int m_client_counts {0};
 
     std::set<TcpConnection::TcpConnectionPtr> m_client;
+
+    TimerEvent::TimerEventPtr m_clear_client_timer_event;
 
 };
 }
