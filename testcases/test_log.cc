@@ -17,7 +17,7 @@ void* fun(void*) {
 
 int main() {
 
-  netrpc::Config::GetInst().Init("../conf/netrpc.xml");
+  netrpc::Config::GetInst().Init(NULL);
 
   netrpc::Logger::GetInst().Init(0);
 

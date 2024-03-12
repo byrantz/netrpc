@@ -91,8 +91,8 @@ void test_rpc_channel() {
             ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
-        // channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
-        channel.reset();
+        channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
+        // channel.reset();
     });
 
     // channel->Init(controller, request, response, closure);
@@ -105,12 +105,12 @@ void test_rpc_channel() {
 }
 
 int main() {
-    // netrpc::Config::GetInst().Init("../conf/netrpc_client.xml");
-    
     netrpc::Logger::GetInst().Init(0);
 
     // test_connect();
     // test_tcp_client();
     test_rpc_channel();
+
+    INFOLOG("test_rpc_channel end");
     return 0;
 }

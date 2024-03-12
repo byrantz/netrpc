@@ -16,7 +16,7 @@ namespace netrpc {
     std::shared_ptr<netrpc::RpcController> var_name = std::make_shared<netrpc::RpcController>(); \
 
 #define NEWRPCCHANNEL(addr, var_name) \
-    std::shared_ptr<netrpc::RpcChannel> var_name = std::make_shared<netrpc::RpcChannel>(std::make_shared<netrpc::IPNetAddr>(addr)); \
+    std::shared_ptr<netrpc::RpcChannel> var_name = std::make_shared<netrpc::RpcChannel>(netrpc::RpcChannel::FindAddr(addr)); \
 
 #define CALLRPC(addr, stub_name, method_name, controller, request, response, closure) \
     { \
@@ -32,6 +32,12 @@ public:
     using ControllerPtr = std::shared_ptr<google::protobuf::RpcController>;
     using MessagePtr = std::shared_ptr<google::protobuf::Message>;
     using ClosurePtr = std::shared_ptr<google::protobuf::Closure>; 
+
+public:
+    // 获取 addr
+    // 若 str 是 ip:port，直接返回
+    // 否则认为是 rpc 服务名，尝试从配置文件里面获取对应的 ip:port
+    static NetAddr::NetAddrPtr FindAddr(const std::string& str);
 
 public:
     RpcChannel(NetAddr::NetAddrPtr peer_addr);
@@ -54,7 +60,8 @@ public:
 
     TcpClient* getTcpClient();
 
-    TimerEvent::TimerEventPtr getTimerEvent();
+private:
+    void callBack();
 
 private:
     NetAddr::NetAddrPtr m_peer_addr {nullptr};
@@ -68,8 +75,6 @@ private:
     bool m_is_init {false};
 
     TcpClient::TcpClientPtr m_client {nullptr};
-
-    TimerEvent::TimerEventPtr m_timer_event{nullptr};
 };
 
 }
