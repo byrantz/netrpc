@@ -113,10 +113,17 @@ void TcpConnection::excute() {
             auto it = m_read_dones.find(msg_id);
             if (it != m_read_dones.end()) {
                 it->second(result[i]);
+                m_read_dones.erase(it);
             }
         }
     }
 
+}
+
+
+void TcpConnection::reply(std::vector<AbstractProtocol::AbstractProtocolPtr>& replay_messages) {
+    m_coder->encode(replay_messages, m_out_buffer);
+    listenWrite();
 }
 
 void TcpConnection::onWrite() {
@@ -239,6 +246,10 @@ NetAddr::NetAddrPtr TcpConnection::getLocalAddr() {
 
 NetAddr::NetAddrPtr TcpConnection::getPeerAddr() {
     return m_peer_addr;
+}
+
+int TcpConnection::getFd() {
+    return m_fd;
 }
 
 }

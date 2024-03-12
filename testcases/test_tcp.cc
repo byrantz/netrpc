@@ -15,8 +15,8 @@ void test_tcp_server() {
 
 int main() {
 
-    netrpc::Config::GetInst().Init("../conf/netrpc.xml");
-    netrpc::Logger::GetInst().Init();
+    netrpc::Config::GetInst().Init(NULL);
+    netrpc::Logger::GetInst().Init(0);
 
     test_tcp_server();
 }

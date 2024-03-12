@@ -10,6 +10,7 @@
 #include <sstream>
 #include <cstdio>
 #include <stdexcept>
+#include <pthread.h>
 #include <fmt/core.h>
 #include "netrpc/common/config.h"
 #include "netrpc/net/timer_event.h"
@@ -110,6 +111,9 @@ public:
 public:
     static void* Loop(void*);
 
+public:
+    pthread_t m_thread;
+
 private:
     // m_file_path/m_file_name_yyyymmdd.0
 
@@ -120,7 +124,6 @@ private:
     int m_max_file_size {0}; // 日志单个文件最大大小，单位为字节
 
     sem_t m_sempahore;
-    pthread_t m_thread;
 
     // pthread_cond_t m_condition; // 条件变量
     std::condition_variable m_condvariable;
@@ -154,7 +157,17 @@ public:
         return m_set_level;
     }
 
+    AsyncLogger::AsyncLoggerPtr getAsyncAppLogger() {
+        return m_asnyc_app_logger;
+    }
+
+    AsyncLogger::AsyncLoggerPtr getAsyncLogger() {
+        return m_asnyc_logger;
+    }
+
     void syncLoop();
+
+    void flush();
 
 public:
     // Singleton, delete copy construct

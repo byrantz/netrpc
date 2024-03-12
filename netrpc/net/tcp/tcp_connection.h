@@ -44,6 +44,8 @@ public:
 
     void clear();
 
+    int getFd();
+
     // 服务器主动关闭连接
     void shutdown();
 
@@ -62,6 +64,8 @@ public:
     NetAddr::NetAddrPtr getLocalAddr();
 
     NetAddr::NetAddrPtr getPeerAddr();
+
+    void reply(std::vector<AbstractProtocol::AbstractProtocolPtr>& replay_messages);
 
 private:
     EventLoop* m_eventloop {NULL}; // 代表持有该连接的 IO 线程

@@ -5,6 +5,7 @@
 #include "netrpc/common/run_time.h"
 #include <sstream>
 #include <assert.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <stdio.h>
 #include <iostream>
@@ -13,11 +14,29 @@
 namespace netrpc {
 
 // static Logger* g_logger = NULL;
+void CoredumpHandler(int signal_no) {
+    ERRORLOG("progress received invalid signal, will exit");
+    Logger::GetInst().flush();
+    pthread_join(Logger::GetInst().getAsyncLogger()->m_thread, NULL);
+    pthread_join(Logger::GetInst().getAsyncAppLogger()->m_thread, NULL);
+
+    signal(signal_no, SIG_DFL);
+    raise(signal_no);
+} 
 
 Logger::Logger(LogLevel level, int type /*=1*/) : m_set_level(level), m_type{type} {
     if (m_type == 0) {
         return;
     }
+}
+
+void Logger::flush() {
+    syncLoop();
+    m_asnyc_logger->stop();
+    m_asnyc_logger->flush();
+
+    m_asnyc_app_logger->stop();
+    m_asnyc_app_logger->flush();
 }
 
 void Logger::Init(int type /*=1*/) {
@@ -26,6 +45,11 @@ void Logger::Init(int type /*=1*/) {
   printf("Init log level [%s]\n", LogLevelToString(global_log_level).c_str());
   m_type = type;
   m_set_level = global_log_level;
+
+  if (m_type == 0) {
+    return;
+  }
+
   m_asnyc_logger = std::make_shared<AsyncLogger>(
     Config::GetInst().m_log_file_name + "_rpc",
     Config::GetInst().m_log_file_path,
@@ -35,11 +59,15 @@ void Logger::Init(int type /*=1*/) {
     Config::GetInst().m_log_file_name + "_app",
     Config::GetInst().m_log_file_path,
     Config::GetInst().m_log_max_file_size);
-  if (m_type == 0) {
-    return;
-  }
+
   m_timer_event = std::make_shared<TimerEvent>(Config::GetInst().m_log_sync_interval, true, std::bind(&Logger::syncLoop, this));
   EventLoop::GetCurrentEventLoop()->addTimerEvent(m_timer_event);
+  signal(SIGSEGV, CoredumpHandler);
+  signal(SIGABRT, CoredumpHandler);
+  signal(SIGTERM, CoredumpHandler);
+  signal(SIGKILL, CoredumpHandler);
+  signal(SIGINT, CoredumpHandler);
+  signal(SIGSTKFLT, CoredumpHandler);
 }
 
 void Logger::syncLoop() {

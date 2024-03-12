@@ -6,13 +6,14 @@
 #include <string>
 
 #include "netrpc/net/tcp/net_addr.h"
+#include "netrpc/common/log.h"
 
 namespace netrpc {
 
 class RpcController : public google::protobuf::RpcController {
 public:
-    RpcController() {}
-    ~RpcController() {}
+    RpcController() {INFOLOG("RpcController");}
+    ~RpcController() {INFOLOG("~RpcController");}
 
     void Reset();
 
@@ -50,6 +51,10 @@ public:
 
     int GetTimeout();
 
+    bool Finished();
+
+    void SetFinished(bool value);
+
 private:
     int32_t m_error_code {0};
     std::string m_error_info;
@@ -57,6 +62,7 @@ private:
 
     bool m_is_failed {false};
     bool m_is_canceled {false};
+    bool m_is_finished {false};
 
     NetAddr::NetAddrPtr m_local_addr;
     NetAddr::NetAddrPtr m_peer_addr;
