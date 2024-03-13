@@ -2,10 +2,17 @@
 
 set -e
 
+function create_dir() {
+  if [ ! -d $1 ]; then
+    mkdir $1
+  fi
+}
+
 # 如果没有build目录，创建该目录
-if [ ! -d `pwd`/build ]; then
-    mkdir `pwd`/build
-fi
+create_dir 'build'
+create_dir 'lib'
+create_dir 'bin'
+create_dir 'log'
 
 rm -rf `pwd`/build/*
 

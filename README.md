@@ -94,6 +94,11 @@ public:
         }
         response->set_order_id("20240125");
         APPDEBUGLOG("call makeOrder success");
+        if (done) {
+            done->Run();
+            delete done;
+            done = NULL;
+        }
     }
 };
 
@@ -121,59 +126,59 @@ int main(int argc, char* argv[]) {
 
 **服务调用端**
 ```cpp
-#include "order.pb.h"
-
-/*1. 首先用 host 和 port 生成 channel
-  2. 在 channel 中根据 stub 发起 rpc 调用*/
-
 void test_rpc_channel() {
-    // 服务发布端的地址为 127.0.0.1:12345
     NEWRPCCHANNEL("127.0.0.1:12345", channel);
 
     NEWMESSAGE(makeOrderRequest, request);
     NEWMESSAGE(makeOrderResponse, response);
 
-    // 设置请求参数
     request->set_price(100);
     request->set_goods("apple");
 
     NEWRPCCONTROLLER(controller);
-    // 设置唯一的消息 id
     controller->SetMsgId("99998888");
-    // 设置超时时间
+
     controller->SetTimeout(10000);
-    // 设置 Rpc 成功后的回调函数
-    std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>([request, response, channel, controller]() mutable {
+
+    std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>(nullptr,[request, response, channel, controller]() mutable {
         if (controller->GetErrorCode() == 0) {
-            INFOLOG("call rpc success, request[{}], response[{}]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
+            INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
             // 执行业务逻辑
             if (response->order_id() == "xxx") {
                 // xx
             }  
         } else {
-            ERRORLOG("call rpc failed, request[{}], error code[{}], error info[{}]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
+            ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
-        // channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
-        channel.reset();
+        channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
+        // channel.reset();
     });
 
-    // 调用 RPC 服务
+    // channel->Init(controller, request, response, closure);
+
+    // Order_Stub stub(channel.get());
+
+    // stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
+
     CALLRPC("127.0.0.1:12345", Order_Stub, makeOrder, controller, request, response, closure);
 }
 
 int main() {
-    // netrpc::Config::GetInst().Init("../conf/netrpc_client.xml");
     netrpc::Logger::GetInst().Init(0);
 
+    // test_connect();
+    // test_tcp_client();
     test_rpc_channel();
+
+    INFOLOG("test_rpc_channel end");
     return 0;
 }
 ```
 &nbsp;
 
 
-编写完成后，在根目录下直接执行 `make` 命令，之后到 `bin` 目录下启动RPC服务器和客户端进行测试，请使用以下命令：
+编写完成后，在根目录下直接执行 `sudo sh build.sh` 命令，之后到 `bin` 目录下启动RPC服务器和客户端进行测试，请使用以下命令：
 
 **启动 RPC 服务器**
 
