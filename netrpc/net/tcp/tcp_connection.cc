@@ -58,7 +58,7 @@ void TcpConnection::onRead() {
                 is_read_all = true;
                 break;
             } 
-        } else if (rt == 0) { // 表示已经读取到文件末尾
+        } else if (rt == 0) { // 表示已经读取到文件末尾，对面断开连接，read 会返回 0
             is_close = true;
             break;
         } else if (rt == -1 && errno == EAGAIN) { // 非阻塞模式下没有数据可读，等一会可能有

@@ -86,8 +86,10 @@ private:
 
     TcpConnectionType m_connection_type {TcpConnectionByServer};
 
+    // 客户端发送完消息执行的回调
     std::vector<std::pair<AbstractProtocol::AbstractProtocolPtr, std::function<void(AbstractProtocol::AbstractProtocolPtr)>>> m_write_dones;
 
+    // 客户端收到消息执行的回调
     // key 为 msg_id
     std::map<std::string, std::function<void(AbstractProtocol::AbstractProtocolPtr)>> m_read_dones;
 };

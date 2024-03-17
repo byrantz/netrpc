@@ -20,6 +20,7 @@ public :
 
     ~FdEvent();
 
+    // 将对应的 sockfd 设置为非阻塞
     void setNonBlock();
 
     std::function<void()> handler(TriggerEvent event_type);

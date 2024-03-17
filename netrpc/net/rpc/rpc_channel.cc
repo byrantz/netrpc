@@ -116,17 +116,17 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     m_client->connect([req_protocol, this]() mutable {
 
-    RpcController* my_controller = dynamic_cast<RpcController*>(getController());
+      RpcController* my_controller = dynamic_cast<RpcController*>(getController());
 
-    if (getTcpClient()->getConnectErrorCode() != 0) {
-      my_controller->SetError(getTcpClient()->getConnectErrorCode(), getTcpClient()->getConnectErrorInfo());
-      ERRORLOG("%s | connect error, error coode[%d], error info[%s], peer addr[%s]", 
-        req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
-        my_controller->GetErrorInfo().c_str(), getTcpClient()->getPeerAddr()->toString().c_str());
+      if (getTcpClient()->getConnectErrorCode() != 0) {
+        my_controller->SetError(getTcpClient()->getConnectErrorCode(), getTcpClient()->getConnectErrorInfo());
+        ERRORLOG("%s | connect error, error coode[%d], error info[%s], peer addr[%s]", 
+          req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
+          my_controller->GetErrorInfo().c_str(), getTcpClient()->getPeerAddr()->toString().c_str());
 
-        callBack();
+          callBack();
 
-      return;
+        return;
     }
 
     INFOLOG("%s | connect success, peer addr[%s], local addr[%s]",

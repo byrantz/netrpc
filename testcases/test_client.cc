@@ -51,7 +51,7 @@ void test_connect() {
 }
 
 void test_tcp_client() {
-    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12345);
+    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12346);
     netrpc::TcpClient client(addr);
     client.connect([addr, &client]() {
         DEBUGLOG("connect to [%s] success", addr->toString().c_str());
@@ -75,7 +75,7 @@ void test_tcp_client() {
 }
 
 int main() {
-    netrpc::Config::GetInst().Init(NULL);
+    // netrpc::Config::GetInst().Init(NULL);
     
     netrpc::Logger::GetInst().Init(0);
 

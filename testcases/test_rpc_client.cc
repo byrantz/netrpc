@@ -27,44 +27,44 @@
 
 #include "order.pb.h"
 
-void test_tcp_client() {
-    netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12346);
-    netrpc::TcpClient client(addr);
-    client.connect([addr, &client]() {
-        DEBUGLOG("connect to [%s] success", addr->toString().c_str());
-        std::shared_ptr<netrpc::TinyPBProtocol> message = std::make_shared<netrpc::TinyPBProtocol>();
-        message->m_msg_id = "99998888";
-        message->m_pb_data = "test pb data";
+// void test_tcp_client() {
+//     netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", 12346);
+//     netrpc::TcpClient client(addr);
+//     client.connect([addr, &client]() {
+//         DEBUGLOG("connect to [%s] success", addr->toString().c_str());
+//         std::shared_ptr<netrpc::TinyPBProtocol> message = std::make_shared<netrpc::TinyPBProtocol>();
+//         message->m_msg_id = "99998888";
+//         message->m_pb_data = "test pb data";
 
-        makeOrderRequest request;
-        request.set_price(100);
-        request.set_goods("apple");
+//         makeOrderRequest request;
+//         request.set_price(100);
+//         request.set_goods("apple");
 
-        if (!request.SerializeToString(&(message->m_pb_data))) {
-            ERRORLOG("serilize error");
-            return;
-        }
+//         if (!request.SerializeToString(&(message->m_pb_data))) {
+//             ERRORLOG("serilize error");
+//             return;
+//         }
 
-        message->m_method_name = "Order.makeOrder";
+//         message->m_method_name = "Order.makeOrder";
 
-        client.writeMessage(message, [request](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
-            DEBUGLOG("send message success, request[%s]", request.ShortDebugString().c_str());
-        });
+//         client.writeMessage(message, [request](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+//             DEBUGLOG("send message success, request[%s]", request.ShortDebugString().c_str());
+//         });
 
-        client.readMessage("99998888", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
-            std::shared_ptr<netrpc::TinyPBProtocol> message = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg_ptr);
-            DEBUGLOG("msg_id[%s], get response %s", message->m_msg_id.c_str(), message->m_pb_data.c_str());
-            makeOrderResponse response;
+//         client.readMessage("99998888", [](netrpc::AbstractProtocol::AbstractProtocolPtr msg_ptr) {
+//             std::shared_ptr<netrpc::TinyPBProtocol> message = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg_ptr);
+//             DEBUGLOG("msg_id[%s], get response %s", message->m_msg_id.c_str(), message->m_pb_data.c_str());
+//             makeOrderResponse response;
 
-            if (!response.ParseFromString(message->m_pb_data)) {
-                ERRORLOG("deserialize error");
-                return;
-            }
-            DEBUGLOG("get response success, response[%s]", response.ShortDebugString().c_str());
-        });
+//             if (!response.ParseFromString(message->m_pb_data)) {
+//                 ERRORLOG("deserialize error");
+//                 return;
+//             }
+//             DEBUGLOG("get response success, response[%s]", response.ShortDebugString().c_str());
+//         });
 
-    });
-}
+//     });
+// }
 
 void test_rpc_channel() {
     NEWRPCCHANNEL("127.0.0.1:12345", channel);

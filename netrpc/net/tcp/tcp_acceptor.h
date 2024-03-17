@@ -21,6 +21,7 @@ public:
 private:
     NetAddr::NetAddrPtr m_local_addr; // 服务端监听的地址，addr -> ip:port
 
+    // 协议簇
     int m_family {-1};
 
     int m_listenfd {-1}; // 监听套接字

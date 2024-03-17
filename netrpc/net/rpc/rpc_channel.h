@@ -18,6 +18,7 @@ namespace netrpc {
 #define NEWRPCCHANNEL(addr, var_name) \
     std::shared_ptr<netrpc::RpcChannel> var_name = std::make_shared<netrpc::RpcChannel>(netrpc::RpcChannel::FindAddr(addr)); \
 
+// stub_name 这一步里面会调用 RpcChannel::CallMethod
 #define CALLRPC(addr, stub_name, method_name, controller, request, response, closure) \
     { \
     NEWRPCCHANNEL(addr, channel); \

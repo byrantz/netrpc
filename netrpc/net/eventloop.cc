@@ -130,7 +130,7 @@ void EventLoop::loop() {
 
         if (rt < 0) {
             ERRORLOG("epoll_wait error, errno=%d, error=%s", errno, strerror(errno));
-        } else {
+        } else { 
             for (int i = 0; i < rt; ++ i) {
                 epoll_event trigger_event = result_events[i];
                 FdEvent* fd_event = static_cast<FdEvent*>(trigger_event.data.ptr);
@@ -142,6 +142,7 @@ void EventLoop::loop() {
                 // int event = (int)(trigger_event.events);
                 // DEBUGLOG("unknown event = %d", event);
 
+                // 一旦某个 fd 上发生相应事件，就反过来处理该套接字上的回调函数
                 if (trigger_event.events & EPOLLIN) {
                     DEBUGLOG("fd %d trigger EPOLLIN event", fd_event->getFd());
                     addTask(fd_event->handler(FdEvent::IN_EVENT));

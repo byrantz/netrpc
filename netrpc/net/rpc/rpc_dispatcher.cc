@@ -78,13 +78,12 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
 
     RpcClosure* closure = new RpcClosure(nullptr, [req_msg, rsp_msg, req_protocol, rsp_protocol, connection, rpcController, this]() mutable {
         if (!rsp_msg->SerializeToString(&(rsp_protocol->m_pb_data))) {
-        ERRORLOG("%s | serilize error, origin message [%s]", req_protocol->m_msg_id.c_str(), rsp_msg->ShortDebugString().c_str());
-        setTinyPBError(rsp_protocol, ERROR_FAILED_SERIALIZE, "serilize error");
-
+            ERRORLOG("%s | serilize error, origin message [%s]", req_protocol->m_msg_id.c_str(), rsp_msg->ShortDebugString().c_str());
+            setTinyPBError(rsp_protocol, ERROR_FAILED_SERIALIZE, "serilize error");
         } else {
-        rsp_protocol->m_err_code = 0;
-        rsp_protocol->m_err_info = "";
-        INFOLOG("%s | dispatch success, requesut[%s], response[%s]", req_protocol->m_msg_id.c_str(), req_msg->ShortDebugString().c_str(), rsp_msg->ShortDebugString().c_str());
+            rsp_protocol->m_err_code = 0;
+            rsp_protocol->m_err_info = "";
+            INFOLOG("%s | dispatch success, requesut[%s], response[%s]", req_protocol->m_msg_id.c_str(), req_msg->ShortDebugString().c_str(), rsp_msg->ShortDebugString().c_str());
         }
 
         std::vector<AbstractProtocol::AbstractProtocolPtr> replay_messages;
@@ -92,7 +91,7 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
         connection->reply(replay_messages);
 
     });
-
+    // 在 google::protobuf::Service 类中，CallMethod 
     service->CallMethod(method, rpcController, req_msg, rsp_msg, closure);
 }
 

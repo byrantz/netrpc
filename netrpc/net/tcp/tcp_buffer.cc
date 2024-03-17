@@ -61,6 +61,7 @@ void TcpBuffer::resizeBuffer(int new_size) {
     std::vector<char> tmp(new_size);
     int count = std::min(new_size, readAble());
 
+    // 将可读的数据移到 tmp 的头
     memcpy(&tmp[0], &m_buffer[m_read_index], count);
     m_buffer.swap(tmp);
 

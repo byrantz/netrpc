@@ -38,7 +38,7 @@ TcpClient::~TcpClient() {
 // 如果 connect 成功， done 会被执行
 void TcpClient::connect(std::function<void()> done) {
     int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockLen());
-    if (rt == 0) {
+    if (rt == 0) { // rt = 0，连接成功
         DEBUGLOG("connect [%s] success", m_peer_addr->toString().c_str());
         m_connection->setState(Connected);
         initLocalAddr();
@@ -46,35 +46,36 @@ void TcpClient::connect(std::function<void()> done) {
             done();
         }
     } else if (rt == -1) {
-        if (errno == EINPROGRESS) {
-            // epoll 监听可写事件，然后判断错误码
-            m_fd_event->listen(FdEvent::OUT_EVENT, [this, done]() {
+        if (errno == EINPROGRESS) { // rt == -1 && errno == EINPROGRESS 表示连接正在进行中
+            // epoll 监听可写事件，发生可写事件代表连接已经完成或者失败，然后判断错误码
+            m_fd_event->listen(FdEvent::OUT_EVENT, [this, done]() { 
                 int rt = ::connect(m_fd, m_peer_addr->getSockAddr(), m_peer_addr->getSockLen());
-            if ((rt < 0 && errno == EISCONN) || (rt == 0)) {
-                DEBUGLOG("connect [%s] success", m_peer_addr->toString().c_str());
-                initLocalAddr();
-                m_connection->setState(Connected);
-            } else {
-                if (errno == ECONNREFUSED) {
-                    m_connect_error_code = ERROR_PEER_CLOSED;
-                    m_connect_error_info = "connect refused, sys error = " + std::string(strerror(errno));
+                if ((rt < 0 && errno == EISCONN) || (rt == 0)) { // rt < 0 && errno == EISCONN 表示 socket 在之前已经是连接状态
+                    DEBUGLOG("connect [%s] success", m_peer_addr->toString().c_str());
+                    initLocalAddr();
+                    m_connection->setState(Connected);
                 } else {
-                    m_connect_error_code = ERROR_FAILED_CONNECT;
-                    m_connect_error_info = "connect unkonwn error, sys error =" + std::string(strerror(errno));
+                    if (errno == ECONNREFUSED) { // 连接失败
+                        m_connect_error_code = ERROR_PEER_CLOSED;
+                        m_connect_error_info = "connect refused, sys error = " + std::string(strerror(errno));
+                    } else {
+                        m_connect_error_code = ERROR_FAILED_CONNECT;
+                        m_connect_error_info = "connect unkonwn error, sys error =" + std::string(strerror(errno));
+                    }
+                    ERRORLOG("connect error, errno=%d, error=%s", errno, strerror(errno));
+                    close(m_fd);
+                    // 没有设置设置未超时重连，所以没有用
+                    m_fd = socket(m_peer_addr->getFamily(), SOCK_STREAM, 0);
                 }
-                ERRORLOG("connect error, errno=%d, error=%s", errno, strerror(errno));
-                close(m_fd);
-                m_fd = socket(m_peer_addr->getFamily(), SOCK_STREAM, 0);
-            }
 
 
-            // 连接完后需要去掉可写事件的监听，不然会一直触发
-            m_eventloop->deleteEpollEvent(m_fd_event);
-            DEBUGLOG("now begin to done");
-            // 如果连接完成，才会执行回调函数
-            if (done) {
-                done();
-            }
+                // 连接完后需要去掉可写事件的监听，不然会一直触发
+                m_eventloop->deleteEpollEvent(m_fd_event);
+                DEBUGLOG("now begin to done");
+                // 如果连接完成，才会执行回调函数
+                if (done) {
+                    done();
+                }
         });
 
                
@@ -83,7 +84,7 @@ void TcpClient::connect(std::function<void()> done) {
         if (!m_eventloop->isLooping()) {
             m_eventloop->loop();
         }
-    }   else {
+    } else {
             ERRORLOG("connect error, errno=%d, error=%s", errno, strerror(errno));
             m_connect_error_code = ERROR_FAILED_CONNECT;
             m_connect_error_info = "connect error, sys error = " + std::string(strerror(errno));
