@@ -2,12 +2,14 @@
 ## 项目介绍
 NetRPC 是一个为 Linux 设计的轻量级、高性能 C++ RPC 框架。负责解决在分布式服务部署中服务的发布与调用、消息的序列和反序列化、网络包的收发等问题，使其能提供高并发的远程函数调用服务，可以让使用者专注于业务，快速实现微服务的分布式部署。
 
-## 主要功能
-**服务端发布** ：支持将本地服务注册到 rpc 节点上并启动该服务，等待远程的 rpc 调用；支持执行回调操作，完成响应对象数据的序列化和网络发送
+## Features
++ 并发模型采用 Epoll LT + 主从 Readtor + 非阻塞 I/O + 线程池，使用轮询方式将新连接分给其中一个 Reactor 线程。
++ 基于 Protobuf 实现了自定义的通信协议，来传输序列化后的 RPC 调用数据
++ 实现了异步日志系统，并分开存放框架日志和业务日志，在不影响服务器运行效率的同时记录服务器的运行状态，便于排查问题。
++ 利用 timerfd 提供毫秒级精度的定时器，为异步日志提供支持
++ 在 RPC 客户端实现了简单的 RPC 调用异常重试的机制，提升了框架的容错性
 
-**服务调用端** ：支持调用服务发布端的某已注册的服务，并接受发布端返回的响应数据
 
-**日志功能** ：支持分级设置日志级别，方便调试
 
 
 
@@ -151,15 +153,8 @@ void test_rpc_channel() {
             ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
-        channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
-        // channel.reset();
+        channel->getTcpClient()->stop(); 
     });
-
-    // channel->Init(controller, request, response, closure);
-
-    // Order_Stub stub(channel.get());
-
-    // stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
 
     CALLRPC("127.0.0.1:12345", Order_Stub, makeOrder, controller, request, response, closure);
 }
@@ -191,5 +186,11 @@ int main() {
 ```
 ./test_rpc_client
 ```
+
+
+## TODO
+
+- 实现基于 HTTP 协议的通信，进行压力测试
+- 使用 Zookeeper 实现服务发现功能
 
 

@@ -153,4 +153,8 @@ void TcpClient::addTimerEvent(TimerEvent::TimerEventPtr timer_event) {
     m_eventloop->addTimerEvent(timer_event);
 }
 
+TcpConnection::TcpConnectionPtr TcpClient::getConnection() {
+    return m_connection;
+}
+
 }

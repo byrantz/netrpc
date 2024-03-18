@@ -114,65 +114,71 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     m_client->addTimerEvent(timer_event);
 
-    m_client->connect([req_protocol, this]() mutable {
+    int maxRetry = my_controller->GetMaxRetry();
+    for (int i = 0; i < maxRetry; i ++ ) {
+        if (m_client->getConnection()->getState() == Connected) {
+          break;
+        }
+        m_client->connect([req_protocol, this]() mutable {
 
-      RpcController* my_controller = dynamic_cast<RpcController*>(getController());
+        RpcController* my_controller = dynamic_cast<RpcController*>(getController());
 
-      if (getTcpClient()->getConnectErrorCode() != 0) {
-        my_controller->SetError(getTcpClient()->getConnectErrorCode(), getTcpClient()->getConnectErrorInfo());
-        ERRORLOG("%s | connect error, error coode[%d], error info[%s], peer addr[%s]", 
-          req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
-          my_controller->GetErrorInfo().c_str(), getTcpClient()->getPeerAddr()->toString().c_str());
+        if (getTcpClient()->getConnectErrorCode() != 0) {
+          my_controller->SetError(getTcpClient()->getConnectErrorCode(), getTcpClient()->getConnectErrorInfo());
+          ERRORLOG("%s | connect error, error coode[%d], error info[%s], peer addr[%s]", 
+            req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
+            my_controller->GetErrorInfo().c_str(), getTcpClient()->getPeerAddr()->toString().c_str());
 
-          callBack();
+            callBack();
 
-        return;
-    }
-
-    INFOLOG("%s | connect success, peer addr[%s], local addr[%s]",
-      req_protocol->m_msg_id.c_str(), 
-      getTcpClient()->getPeerAddr()->toString().c_str(), 
-      getTcpClient()->getLocalAddr()->toString().c_str()); 
-
-      getTcpClient()->writeMessage(req_protocol, [req_protocol, this, my_controller](AbstractProtocol::AbstractProtocolPtr) mutable {
-        INFOLOG("%s | send rpc request success. call method name[%s], peer addr[%s], local addr[%s]", 
-          req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
-          getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
-
-      getTcpClient()->readMessage(req_protocol->m_msg_id, [this, my_controller](AbstractProtocol::AbstractProtocolPtr msg) mutable {
-        std::shared_ptr<netrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg);
-        INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]", 
-          rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
-          getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
-        
-
-        if (!(getResponse()->ParseFromString(rsp_protocol->m_pb_data))){
-          ERRORLOG("%s | serialize error", rsp_protocol->m_msg_id.c_str());
-          my_controller->SetError(ERROR_FAILED_SERIALIZE, "serialize error");
-          callBack();
           return;
         }
 
-        if (rsp_protocol->m_err_code != 0) {
-          ERRORLOG("%s | call rpc methood[%s] failed, error code[%d], error info[%s]", 
-            rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
-            rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
+        INFOLOG("%s | connect success, peer addr[%s], local addr[%s]",
+          req_protocol->m_msg_id.c_str(), 
+          getTcpClient()->getPeerAddr()->toString().c_str(), 
+          getTcpClient()->getLocalAddr()->toString().c_str()); 
 
-          my_controller->SetError(rsp_protocol->m_err_code, rsp_protocol->m_err_info);
-          callBack();
-          return;
-        }
+        getTcpClient()->writeMessage(req_protocol, [req_protocol, this, my_controller](AbstractProtocol::AbstractProtocolPtr) mutable {
+          INFOLOG("%s | send rpc request success. call method name[%s], peer addr[%s], local addr[%s]", 
+            req_protocol->m_msg_id.c_str(), req_protocol->m_method_name.c_str(),
+            getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
 
-        INFOLOG("%s | call rpc success, call method name[%s], peer addr[%s], local addr[%s]",
-          rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
-          getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
+        getTcpClient()->readMessage(req_protocol->m_msg_id, [this, my_controller](AbstractProtocol::AbstractProtocolPtr msg) mutable {
+            std::shared_ptr<netrpc::TinyPBProtocol> rsp_protocol = std::dynamic_pointer_cast<netrpc::TinyPBProtocol>(msg);
+            INFOLOG("%s | success get rpc response, call method name[%s], peer addr[%s], local addr[%s]", 
+              rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+              getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
+          
 
-          callBack();
+            if (!(getResponse()->ParseFromString(rsp_protocol->m_pb_data))){
+              ERRORLOG("%s | serialize error", rsp_protocol->m_msg_id.c_str());
+                my_controller->SetError(ERROR_FAILED_SERIALIZE, "serialize error");
+                callBack();
+              return;
+            }
+
+            if (rsp_protocol->m_err_code != 0) {
+              ERRORLOG("%s | call rpc methood[%s] failed, error code[%d], error info[%s]", 
+                rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+                rsp_protocol->m_err_code, rsp_protocol->m_err_info.c_str());
+
+              my_controller->SetError(rsp_protocol->m_err_code, rsp_protocol->m_err_info);
+              callBack();
+              return;
+            }
+
+            INFOLOG("%s | call rpc success, call method name[%s], peer addr[%s], local addr[%s]",
+              rsp_protocol->m_msg_id.c_str(), rsp_protocol->m_method_name.c_str(),
+              getTcpClient()->getPeerAddr()->toString().c_str(), getTcpClient()->getLocalAddr()->toString().c_str());
+
+            callBack();
+          });
+
+        });
+
       });
-
-    });
-
-  });
+    }
 
 }
 

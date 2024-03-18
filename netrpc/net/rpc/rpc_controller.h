@@ -55,6 +55,10 @@ public:
 
     void SetFinished(bool value);
 
+    int GetMaxRetry();
+
+    void SetMaxRetry(const int maxRetry);
+
 private:
     int32_t m_error_code {0};
     std::string m_error_info;
@@ -68,6 +72,7 @@ private:
     NetAddr::NetAddrPtr m_peer_addr;
 
     int m_timeout {1000}; // ms
+    int m_max_retry {2}; // 客户端最大重试次数
 };
 
 }

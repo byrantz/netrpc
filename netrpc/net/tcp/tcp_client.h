@@ -44,6 +44,8 @@ public:
 
     void addTimerEvent(TimerEvent::TimerEventPtr timer_event);
 
+    TcpConnection::TcpConnectionPtr getConnection();
+
 private:
     NetAddr::NetAddrPtr m_peer_addr;
     NetAddr::NetAddrPtr m_local_addr;

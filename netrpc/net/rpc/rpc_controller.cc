@@ -96,4 +96,12 @@ void RpcController::SetFinished(bool value) {
   m_is_finished = value;
 }
 
+int RpcController::GetMaxRetry() {
+  return m_max_retry;
+}
+
+void RpcController::SetMaxRetry(int maxRetry) {
+  m_max_retry = maxRetry;
+}
+
 }
