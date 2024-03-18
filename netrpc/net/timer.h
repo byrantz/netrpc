@@ -24,7 +24,7 @@ private:
     void resetArriveTime();
 
 private:
-    // 保存对应的时间和定时任务
+    // 保存对应的时间和定时任务, multimap 自动根据健（即到期时间）升序排序，最早到期的事件位于 multimap 的开始位置
     std::multimap<int64_t, TimerEvent::TimerEventPtr> m_pending_events;
     std::mutex m_mutex;
 };

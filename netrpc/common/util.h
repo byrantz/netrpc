@@ -16,4 +16,8 @@ int64_t getNowMs();
 int32_t getInt32FromNetByte(const char* buf);
 }
 
+double getCPUUtilization();     // 获取CPU利用率
+
+double getAverageLoad();        // 获取系统的平均负载能力
+
 #endif
