@@ -20,7 +20,7 @@ Timer::~Timer() {
 }
 
 void Timer::onTimer() {
-    // 处理缓冲区数据，防止下一次继续触发可读事件
+    // 处理 timer::m_fd 缓冲区数据，防止下一次继续触发可读事件
     DEBUGLOG("ontimer");
     char buf[8];
     while (1) {
@@ -56,7 +56,7 @@ void Timer::onTimer() {
     // 需要把重复的 Event 再次添加进去
     for (auto i = tmps.begin(); i != tmps.end(); ++i ) {
         if ((*i)->isRepeated()) {
-            // 调整 arriveTime
+            // 调整 TimerEvent::arriveTime
             (*i)->resetArriveTime();
             addTimerEvent(*i);
         }
@@ -115,6 +115,7 @@ void Timer::addTimerEvent(TimerEvent::TimerEventPtr event) {
 
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+        // 如果新加的事件比队列中的任何队列都要早到期，那就就需要重置 timerfd 的超时事件
         if (m_pending_events.empty()) {
             is_reset_timerfd = true;
         } else {
