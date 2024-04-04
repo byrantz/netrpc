@@ -35,12 +35,16 @@ public:
     int m_log_max_file_size {0};
     int m_log_sync_interval {0}; // 日志同步间隔，ms
 
+    std::string m_ip;
     int m_port {0};
     int m_io_threads {0};
 
     TiXmlDocument* m_xml_document{NULL};
 
     std::map<std::string, RpcStub> m_rpc_stubs;
+
+    std::string m_zk_ip {"127.0.0.1"};
+    std::string m_zk_port {"0"};
 
 private:
     Config() = default;

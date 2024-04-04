@@ -67,7 +67,13 @@
 // }
 
 void test_rpc_channel() {
-    NEWRPCCHANNEL("127.0.0.1:12345", channel);
+    std::string service_name = "Order"; 
+    std::string method_name = "makeOrder"; 
+    netrpc::ZkClient zkCli; 
+    zkCli.Start(); 
+    std::string method_path = "/" + service_name + "/" + method_name; 
+    std::string host_data = zkCli.GetData(method_path.c_str()); 
+    NEWRPCCHANNEL(host_data, channel);
 
     NEWMESSAGE(makeOrderRequest, request);
     NEWMESSAGE(makeOrderResponse, response);
@@ -101,11 +107,12 @@ void test_rpc_channel() {
 
     // stub.makeOrder(controller.get(), request.get(), response.get(), closure.get());
 
-    CALLRPC("127.0.0.1:12345", Order_Stub, makeOrder, controller, request, response, closure);
+    CALLRPC(host_data, Order_Stub, makeOrder, controller, request, response, closure);
 }
 
 int main() {
     netrpc::Logger::GetInst().Init(0);
+    netrpc::Config::GetInst().Init("../conf/netrpc.xml");
 
     // test_connect();
     // test_tcp_client();

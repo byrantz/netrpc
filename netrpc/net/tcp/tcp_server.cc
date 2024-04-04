@@ -6,6 +6,8 @@
 
 namespace netrpc {
 
+ZkClient TcpServer::zkCli;
+
 TcpServer::TcpServer(NetAddr::NetAddrPtr local_addr) : m_local_addr(local_addr) {
     init();
 
@@ -40,6 +42,7 @@ void TcpServer::init() {
     m_main_eventloop->addEpollEvent(m_listen_fd_event);
     m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
     m_main_eventloop->addTimerEvent(m_clear_client_timer_event);
+
 }
 
 void TcpServer::onAccept() {

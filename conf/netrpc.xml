@@ -9,9 +9,15 @@
   </log>
 
   <server>
+    <ip>127.0.0.1</ip>
     <port>12345</port>
     <io_threads>4</io_threads>
   </server>
+
+  <zk_config>
+    <zk_ip>127.0.0.1</zk_ip>
+    <zk_port>2181</zk_port>
+  </zk_config>
 
   <stubs>
     <rpc_server>

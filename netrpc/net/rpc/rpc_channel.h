@@ -4,6 +4,7 @@
 #include <google/protobuf/service.h>
 #include <memory>
 #include "netrpc/net/tcp/net_addr.h"
+#include "netrpc/common/zookeeperutil.h"
 #include "netrpc/net/tcp/tcp_client.h"
 #include "netrpc/net/timer_event.h"
 

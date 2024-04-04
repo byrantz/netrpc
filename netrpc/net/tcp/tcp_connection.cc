@@ -31,6 +31,11 @@ TcpConnection::~TcpConnection() {
     }
 }
 
+/*
+这个函数本身的操作模式是异步的。有一个循环，它不会因为等待数据而阻塞，
+它会进行尽可能多的非阻塞读取，直至读完所有数据或 read 返回 EAGAIN。
+这意味着，虽然函数可能需要在数据准备就绪时被多次调用，它不会阻塞调用者的执行流程。
+*/
 void TcpConnection::onRead() {
     // 从 socket 缓冲区，调用系统的 read 函数读取字节, 读入到 in_buffer 里面
 

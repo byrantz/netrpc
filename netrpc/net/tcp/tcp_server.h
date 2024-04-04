@@ -7,6 +7,7 @@
 #include "netrpc/net/eventloop.h"
 #include "netrpc/net/io_thread_group.h"
 #include "netrpc/net/tcp/tcp_connection.h"
+#include "netrpc/common/zookeeperutil.h"
 
 namespace netrpc {
 
@@ -20,6 +21,8 @@ public:
 
     // 消除 closed 的连接
     void ClearClientTimerFunc();
+
+    static ZkClient zkCli;
 
 private:
     void init();
@@ -43,6 +46,7 @@ private:
     std::set<TcpConnection::TcpConnectionPtr> m_client;
 
     TimerEvent::TimerEventPtr m_clear_client_timer_event;
+
 
 };
 }

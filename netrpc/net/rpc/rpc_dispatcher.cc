@@ -10,7 +10,9 @@
 #include "netrpc/net/rpc/rpc_closure.h"
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/net/tcp/tcp_connection.h"
+#include "netrpc/net/tcp/tcp_server.h"
 #include "netrpc/common/run_time.h"
+#include "netrpc/common/zookeeperutil.h"
 
 namespace netrpc {
 
@@ -43,7 +45,7 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
         return;
     }
 
-    ServicePtr service = (*it).second;
+    ServicePtr service = (*it).second.m_service;
 
     const google::protobuf::MethodDescriptor* method = service->GetDescriptor()->FindMethodByName(method_name);
     if (method == NULL) {
@@ -96,9 +98,45 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
 }
 
 void RpcDispatcher::registerService(ServicePtr service) {
-    std::string service_name = service->GetDescriptor()->full_name();
-    m_service_map[service_name] = service;
-}
+    ServiceInfo service_info;
+    std::string service_name = service->GetDescriptor()->name();
+    // m_service_map[service_name] = service;
+    // 获取服务对象service的方法的数量
+    int methodCnt = service->GetDescriptor()->method_count();
+    
+
+
+    for (int i=0; i < methodCnt; ++i)
+    {
+        // 获取了服务对象指定下标的服务方法的描述（抽象描述） UserService   Login
+        const google::protobuf::MethodDescriptor* pmethodDesc = service->GetDescriptor()->method(i);
+        std::string method_name = pmethodDesc->name();
+        service_info.m_methodMap.insert({method_name, pmethodDesc});
+    }
+    service_info.m_service = service;
+    m_service_map.insert({service_name, service_info});
+
+    TcpServer::zkCli.Start();
+    for (auto &sp : m_service_map) 
+    {
+        // /service_name   /UserServiceRpc
+        std::string service_path = "/" + sp.first;
+        TcpServer::zkCli.Create(service_path.c_str(), nullptr, 0);
+        std::string ip = Config::GetInst().m_ip;
+        int port = Config::GetInst().m_port;
+        for (auto &mp : sp.second.m_methodMap)
+        {
+            // /service_name/method_name   /UserServiceRpc/Login 存储当前这个rpc服务节点主机的ip和port
+            std::string method_path = service_path + "/" + mp.first;
+            char method_path_data[128] = {0};
+            sprintf(method_path_data, "%s:%d", ip.c_str(), port);
+            // ZOO_EPHEMERAL表示znode是一个临时性节点
+            TcpServer::zkCli.Create(method_path.c_str(), method_path_data, strlen(method_path_data), ZOO_EPHEMERAL);
+        }
+    }
+}   
+
+    
 
 void RpcDispatcher::setTinyPBError(std::shared_ptr<TinyPBProtocol> msg, int32_t err_code, const std::string err_info) {
     msg->m_err_code = err_code;

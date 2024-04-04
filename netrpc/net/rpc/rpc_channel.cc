@@ -11,6 +11,7 @@
 #include "netrpc/common/error_code.h"
 #include "netrpc/common/run_time.h"
 #include "netrpc/net/timer_event.h"
+#include "netrpc/common/zookeeperutil.h"
 
 namespace netrpc {
 
@@ -50,6 +51,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
         callBack();
         return;
     }
+
     if (m_peer_addr == nullptr) {
       ERRORLOG("failed get peer addr");
       my_controller->SetError(ERROR_RPC_PEER_ADDR, "peer addr nullptr");
@@ -114,11 +116,13 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
 
     m_client->addTimerEvent(timer_event);
 
+    // 设置失败重连
     int maxRetry = my_controller->GetMaxRetry();
     for (int i = 0; i < maxRetry; i ++ ) {
         if (m_client->getConnection()->getState() == Connected) {
           break;
         }
+        // 这里进入 TcpClient 调用 ::connect 阻塞等待返回值
         m_client->connect([req_protocol, this]() mutable {
 
         RpcController* my_controller = dynamic_cast<RpcController*>(getController());
@@ -129,7 +133,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
             req_protocol->m_msg_id.c_str(), my_controller->GetErrorCode(), 
             my_controller->GetErrorInfo().c_str(), getTcpClient()->getPeerAddr()->toString().c_str());
 
-            callBack();
+          callBack();
 
           return;
         }

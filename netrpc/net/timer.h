@@ -18,7 +18,7 @@ public:
 
     void deleteTimerEvent(TimerEvent::TimerEventPtr event);
 
-    void onTimer(); // 当发送了 IO 事件后，eventloop 会执行这个回调函数
+    void onTimer(); // 相当于Fd中的handler执行的回调函数，eventloop 会执行这个回调函数
 
 private:
     void resetArriveTime();

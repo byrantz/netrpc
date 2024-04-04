@@ -37,7 +37,12 @@ private:
 
 private:
     RpcDispatcher() = default;
-    std::map<std::string, ServicePtr> m_service_map;
+    struct ServiceInfo
+    {
+        ServicePtr m_service; // 保存服务对象
+        std::unordered_map<std::string, const google::protobuf::MethodDescriptor*> m_methodMap; // 保存服务方法
+    };   
+    std::map<std::string, ServiceInfo> m_service_map;
 };
 
 }

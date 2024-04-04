@@ -197,6 +197,10 @@ void* AsyncLogger::Loop(void* arg) {
 
     AsyncLogger* logger = reinterpret_cast<AsyncLogger*>(arg);
 
+    /*
+        通过使用信号量，确保了AsyncLogger对象的构造已完成，并且Loop线程已经启动且准备好执行循环逻辑之前，构造函数不会返回。
+        这种同步机制可以防止出现在构造函数完成之前Loop方法就开始操作对象成员变量（如m_file_name, m_file_path, m_max_file_size等）的情况，进而防止潜在的竞态条件。
+    */
     sem_post(&logger->m_sempahore);
 
     while (1) {
