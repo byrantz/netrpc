@@ -1,5 +1,5 @@
-#ifndef NETRPC_COMMOM_MD5_H
-#define NETRPC_COMMOM_MD5_H
+#ifndef NETRPC_COMMON_ENCO_MD5_H
+#define NETRPC_COMMON_ENCO_MD5_H
 
 #include <cctype>
 #include <vector>
@@ -67,7 +67,6 @@ public:
     MD5();
     std::vector<uint8_t> digest(const std::string &src); // MD5值转字节数组
 };
-
 }
 
 #endif

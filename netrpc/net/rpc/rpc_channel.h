@@ -3,10 +3,12 @@
 
 #include <google/protobuf/service.h>
 #include <memory>
+#include <vector>
 #include "netrpc/net/tcp/net_addr.h"
 #include "netrpc/common/zookeeperutil.h"
 #include "netrpc/net/tcp/tcp_client.h"
 #include "netrpc/net/timer_event.h"
+#include "netrpc/net/load_balance.h"
 
 namespace netrpc {
 
@@ -44,6 +46,8 @@ public:
 public:
     RpcChannel(NetAddr::NetAddrPtr peer_addr);
 
+    RpcChannel(std::vector<NetAddr::NetAddrPtr> addrs, LoadBalanceCategory loadBalance = LoadBalanceCategory::Random);
+
     ~RpcChannel();
 
     void CallMethod(const google::protobuf::MethodDescriptor* method,
@@ -77,6 +81,9 @@ private:
     bool m_is_init {false};
 
     TcpClient::TcpClientPtr m_client {nullptr};
+
+    std::vector<NetAddr::NetAddrPtr> m_addrs;
+    LoadBalanceStrategy::ptr m_loadBalancer;
 };
 
 }

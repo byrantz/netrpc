@@ -160,5 +160,4 @@ void MD5::resetVector()
     state[2] = C;
     state[3] = D;
 }
-
 }

@@ -97,7 +97,7 @@ void test_rpc_channel() {
             ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
-        channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
+        // channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
         // channel.reset();
     });
 

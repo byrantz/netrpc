@@ -6,18 +6,24 @@
 #include "netrpc/net/rpc/rpc_controller.h"
 #include "netrpc/net/coder/tinypb_protocol.h"
 #include "netrpc/net/tcp/tcp_client.h"
+#include "netrpc/net/timer_event.h"
 #include "netrpc/common/log.h"
 #include "netrpc/common/msg_id_util.h"
 #include "netrpc/common/error_code.h"
 #include "netrpc/common/run_time.h"
-#include "netrpc/net/timer_event.h"
 #include "netrpc/common/zookeeperutil.h"
 
 namespace netrpc {
 
 RpcChannel::RpcChannel(NetAddr::NetAddrPtr peer_addr): m_peer_addr(peer_addr) {
   INFOLOG("RpcChannel");
-  m_client = std::make_shared<TcpClient>(m_peer_addr);
+  m_addrs.clear();
+  m_addrs.push_back(m_peer_addr);
+  m_loadBalancer = LoadBalance::queryStrategy(LoadBalanceCategory::Random);
+}
+
+RpcChannel::RpcChannel(std::vector<NetAddr::NetAddrPtr> addrs, LoadBalanceCategory loadBalance /* = LoadBalanceCategory::Random*/) : m_addrs(addrs) {
+  m_loadBalancer = LoadBalance::queryStrategy(loadBalance);
 }
 
 RpcChannel::~RpcChannel() {
@@ -43,6 +49,7 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
                         google::protobuf::Message* response, google::protobuf::Closure* done) {
 
     std::shared_ptr<netrpc::TinyPBProtocol> req_protocol = std::make_shared<netrpc::TinyPBProtocol>();
+    TinyPBProtocol tmp;
 
     RpcController* my_controller = dynamic_cast<RpcController*>(controller);
     if (my_controller == NULL || request == NULL || response == NULL) {
@@ -59,7 +66,6 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
       return;
     }
 
-    m_client = std::make_shared<TcpClient>(m_peer_addr);
 
     if (my_controller->GetMsgId().empty()) {
       // 先从 runtime 里面取, 取不到再生成一个
@@ -97,6 +103,12 @@ void RpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
         callBack();
         return;
     }
+
+    // 负载选择
+    tmp.m_method_name = method->full_name();
+    tmp.m_pb_data = req_protocol->m_pb_data;
+    NetAddr::NetAddrPtr addr = m_loadBalancer->select(m_addrs, tmp);
+    m_client = std::make_shared<TcpClient>(m_peer_addr);
 
     RpcChannelPtr channel = shared_from_this();
 
