@@ -12,7 +12,5 @@ RunTime* RunTime::GetRunTime() {
     return t_run_time;
 }
 
-RpcInterface* RunTime::getRpcInterface() {
-    return m_rpc_interface;
-}
+
 }

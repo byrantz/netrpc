@@ -2,14 +2,16 @@
 ## 项目介绍
 NetRPC 是一个为 Linux 设计的轻量级、高性能 C++ RPC 框架。负责解决在分布式服务部署中服务的发布与调用、消息的序列和反序列化、网络包的收发等问题，使其能提供高并发的远程函数调用服务，可以让使用者专注于业务，快速实现微服务的分布式部署。
 
+![架构图](./imgs/架构图.png)
+
 ## Features
 + 并发模型采用 Epoll LT + 主从 Readtor + 非阻塞 I/O + 线程池，使用轮询方式将新连接分给其中一个 Reactor 线程。
-+ 基于 Protobuf 实现了自定义的通信协议，来传输序列化后的 RPC 调用数据
++ 基于 Protobuf 实现了自定义的通信协议，来传输序列化后的 RPC 调用数据。
 + 实现了异步日志系统，并分开存放框架日志和业务日志，在不影响服务器运行效率的同时记录服务器的运行状态，便于排查问题。
-+ 利用 timerfd 提供毫秒级精度的定时器，为异步日志提供支持
-+ 在 RPC 客户端实现了简单的 RPC 调用异常重试的机制，提升了框架的容错性
-
-
++ 利用 timerfd 提供毫秒级精度的定时器，为异步日志提供支持。
++ 在 RPC 客户端实现了简单的 RPC 调用异常重试的机制，提升了框架的容错性。
++ 借助ZooKeeper提供的服务治理功能，实现了框架的服务注册和服务发现功能。
++ 实现了随机、轮询、一致性哈希三种负载均衡策略，并使用简单工厂模式进行封装。
 
 
 
@@ -37,6 +39,18 @@ sudo make install
 ```
 wget https://udomain.dl.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
 unzip tinyxml_2_6_2.zip
+```
+
+**安装 Zookeeper**
+```
+wget https://mirror.bit.edu.cn/apache/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
+tar -zxvf zookeeper-3.4.14.tar.gz
+cd zookeeper-3.4.14 
+cd conf/
+cp zoo_sample.cfg zoo.cfg
+cd ..
+cd bin/
+sh zkServer.sh start
 ```
 
 
@@ -78,7 +92,6 @@ protoc -I=. order.proto -cpp_out=.
 ```cpp
 #include "order.pb.h"
 
-// 实现服务
 class OrderImpl : public Order {
 
 public:
@@ -109,16 +122,13 @@ int main(int argc, char* argv[]) {
     netrpc::Config::GetInst().Init("../conf/netrpc.xml");
     netrpc::Logger::GetInst().Init(1);
 
-    // 注册 OrderImpl 服务
     std::shared_ptr<OrderImpl> service = std::make_shared<OrderImpl>();
     netrpc::RpcDispatcher::GetInst().registerService(service);
 
-    // 设置发布的 ip:port
     netrpc::IPNetAddr::NetAddrPtr addr = std::make_shared<netrpc::IPNetAddr>("127.0.0.1", netrpc::Config::GetInst().m_port);
 
     netrpc::TcpServer tcp_server(addr);
 
-    // 启动服务等待调用
     tcp_server.start();
 
     return 0;
@@ -129,7 +139,13 @@ int main(int argc, char* argv[]) {
 **服务调用端**
 ```cpp
 void test_rpc_channel() {
-    NEWRPCCHANNEL("127.0.0.1:12345", channel);
+    std::string service_name = "Order"; 
+    std::string method_name = "makeOrder"; 
+    netrpc::ZkClient zkCli; 
+    zkCli.Start(); 
+    std::string method_path = "/" + service_name + "/" + method_name; 
+    std::string host_data = zkCli.GetData(method_path.c_str()); 
+    NEWRPCCHANNEL(host_data, channel);
 
     NEWMESSAGE(makeOrderRequest, request);
     NEWMESSAGE(makeOrderResponse, response);
@@ -153,17 +169,17 @@ void test_rpc_channel() {
             ERRORLOG("call rpc failed, request[%s], error code[%d], error info[%s]", request->ShortDebugString().c_str(), controller->GetErrorCode(), controller->GetErrorInfo().c_str());
         }
         INFOLOG("now exit eventloop");
-        channel->getTcpClient()->stop(); 
+        // channel->getTcpClient()->stop(); // 执行这句话，不能看日志效果
+        // channel.reset();
     });
 
-    CALLRPC("127.0.0.1:12345", Order_Stub, makeOrder, controller, request, response, closure);
+    CALLRPC(host_data, Order_Stub, makeOrder, controller, request, response, closure);
 }
 
 int main() {
     netrpc::Logger::GetInst().Init(0);
+    netrpc::Config::GetInst().Init("../conf/netrpc.xml");
 
-    // test_connect();
-    // test_tcp_client();
     test_rpc_channel();
 
     INFOLOG("test_rpc_channel end");
@@ -191,6 +207,7 @@ int main() {
 ## TODO
 
 - 实现基于 HTTP 协议的通信，进行压力测试
-- 使用 Zookeeper 实现服务发现功能
+- 加入对RPC长连接的支持
+- 加入服务熔断、降级、限流等其他服务治理功能
 
 
