@@ -61,7 +61,7 @@ private:
 class ConsistentHashLoadBalanceStrategy : public LoadBalanceStrategy {
 public:
     NetAddr::NetAddrPtr select(std::vector<NetAddr::NetAddrPtr> &addrs , const TinyPBProtocol &invocation) {
-        size_t identityHashCode = hashCode(addrs);
+        size_t identityHashCode = hashCode(addrs); // 用于确定一致性哈希环上虚拟节点的位置
         std::lock_guard<std::mutex> lock(mutex_); // C++的map不是线程安全的
         auto it = selectors_.find(invocation.m_method_name); // 对每个服务创建一个选择器
         std::shared_ptr<ConsistentHashSelector> selector;
@@ -77,10 +77,11 @@ public:
         return selector->select(invocation.m_pb_data); // 同一个参数，请求会打到同一个虚拟节点上
     }
 private:
+    /*每个 ConsistentHashSelector 就是一个一致性哈希的实现*/
     class ConsistentHashSelector {
     public:
         ConsistentHashSelector(std::vector<NetAddr::NetAddrPtr> &invokers, int replicaNumber, int identityHashCode) : identityHashCode(identityHashCode) {
-            // 创建ConsistentHashSelector时会生成所有虚拟节点，
+            // 创建ConsistentHashSelector时会生成所有虚拟节点，每个 ip 都是一个实际节点
             for (const auto &invoker : invokers) {
                 // 每个实际节点扩展为160个虚拟节点，每4个为一组
                 for (int i = 0; i < replicaNumber / 4; i++) {

@@ -65,6 +65,9 @@ private:
 
 public:
     MD5();
+    // 计算字符串的 MD5 哈希值
+    // 它首先重置状态，然后将字符串转换为字节流，
+    // 进行填充，计算MD5值，并最终生成字节数组形式的哈希值。
     std::vector<uint8_t> digest(const std::string &src); // MD5值转字节数组
 };
 }
