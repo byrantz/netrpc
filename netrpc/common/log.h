@@ -11,7 +11,6 @@
 #include <cstdio>
 #include <stdexcept>
 #include <pthread.h>
-#include <fmt/core.h>
 #include "netrpc/common/config.h"
 #include "netrpc/net/timer_event.h"
 

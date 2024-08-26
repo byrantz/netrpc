@@ -2,6 +2,7 @@
 #define NETRPC_NET_ABSTRACT_PROTOCOL_H
 
 #include <memory>
+#include <string>
 
 namespace netrpc {
 

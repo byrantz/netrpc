@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <string>
 #include <memory>
 #include <unistd.h>
 #include <google/protobuf/service.h>
@@ -86,7 +85,7 @@ void test_rpc_channel() {
 
     controller->SetTimeout(10000);
 
-    std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>(nullptr,[request, response, channel, controller]() mutable {
+    std::shared_ptr<netrpc::RpcClosure> closure = std::make_shared<netrpc::RpcClosure>([request, response, channel, controller]() mutable {
         if (controller->GetErrorCode() == 0) {
             INFOLOG("call rpc success, request[%s], response[%s]", request->ShortDebugString().c_str(), response->ShortDebugString().c_str());
             // 执行业务逻辑

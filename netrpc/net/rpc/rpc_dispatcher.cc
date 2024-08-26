@@ -78,7 +78,7 @@ void RpcDispatcher::dispatch(AbstractProtocol::AbstractProtocolPtr request, Abst
 
     
 
-    RpcClosure* closure = new RpcClosure(nullptr, [req_msg, rsp_msg, req_protocol, rsp_protocol, connection, rpcController, this]() mutable {
+    RpcClosure* closure = new RpcClosure([req_msg, rsp_msg, req_protocol, rsp_protocol, connection, rpcController, this]() mutable {
         if (!rsp_msg->SerializeToString(&(rsp_protocol->m_pb_data))) {
             ERRORLOG("%s | serilize error, origin message [%s]", req_protocol->m_msg_id.c_str(), rsp_msg->ShortDebugString().c_str());
             setTinyPBError(rsp_protocol, ERROR_FAILED_SERIALIZE, "serilize error");

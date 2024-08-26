@@ -40,12 +40,13 @@ sudo make install
 wget https://udomain.dl.sourceforge.net/project/tinyxml/tinyxml/2.6.2/tinyxml_2_6_2.zip
 unzip tinyxml_2_6_2.zip
 ```
+[TinyXML生成静态库](https://blog.csdn.net/yzf279533105/article/details/77345709)
 
 **安装 Zookeeper**
 ```
-wget https://mirror.bit.edu.cn/apache/zookeeper/zookeeper-3.4.14/zookeeper-3.4.14.tar.gz
-tar -zxvf zookeeper-3.4.14.tar.gz
-cd zookeeper-3.4.14 
+wget https://archive.apache.org/dist/zookeeper/zookeeper-3.6.4/apache-zookeeper-3.6.4-bin.tar.gz
+tar -zxvf apache-zookeeper-3.6.4.tar.gz
+cd apache-zookeeper-3.6.4 
 cd conf/
 cp zoo_sample.cfg zoo.cfg
 cd ..
